@@ -506,7 +506,16 @@ class DDR5 : public IDRAM, public Implementation {
 
       // Set read latency
       m_read_latency = m_timing_vals("nCL") + m_timing_vals("nBL");
-
+      m_write_latency = m_timing_vals("nCWL") + m_timing_vals("nBL");
+      //Fan Li
+      m_read_hit_latency = m_timing_vals("nCL") + m_timing_vals("nBL");
+      m_read_miss_latency = m_timing_vals("nRCD") + m_timing_vals("nCL") + m_timing_vals("nBL");
+      m_read_conflict_latency = m_timing_vals("nRP") + m_timing_vals("nRCD") + m_timing_vals("nCL") + m_timing_vals("nBL");
+      //Fan Li
+      m_write_hit_latency = m_timing_vals("nCWL") + m_timing_vals("nBL") + m_timing_vals("nWR");
+      m_write_miss_latency = m_timing_vals("nRCD") + m_timing_vals("nCWL") + m_timing_vals("nBL") + m_timing_vals("nWR");
+      m_write_conflict_latency = m_timing_vals("nRP") + m_timing_vals("nRCD") + m_timing_vals("nCWL") + m_timing_vals("nBL") + m_timing_vals("nWR");
+      
       // Populate the timing constraints
       #define V(timing) (m_timing_vals(timing))
       auto all_commands = std::vector<std::string_view>(m_commands.begin(), m_commands.end());

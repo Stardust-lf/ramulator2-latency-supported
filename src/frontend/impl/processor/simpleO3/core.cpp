@@ -1,7 +1,6 @@
 #include <filesystem>
 #include <iostream>
 #include <fstream>
-
 #include <spdlog/spdlog.h>
 
 #include "base/exception.h"
@@ -113,7 +112,6 @@ m_id(id), m_window(ipc, depth), m_trace(trace_path), m_num_expected_insts(num_ex
 
 void SimpleO3Core::tick() {
   m_clk++;
-
   s_insts_retired += m_window.retire();
   if (!reached_expected_num_insts) {
     if (s_insts_retired >= m_num_expected_insts) {

@@ -47,14 +47,16 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
     float s_priority_queue_len_avg = 0;
 
     size_t s_read_latency = 0;
+    size_t s_write_latency = 0;
     float s_avg_read_latency = 0;
+    float s_avg_write_latency = 0;
 
 
   public:
     void init() override {
       m_wr_low_watermark =  param<float>("wr_low_watermark").desc("Threshold for switching back to read mode.").default_val(0.2f);
       m_wr_high_watermark = param<float>("wr_high_watermark").desc("Threshold for switching to write mode.").default_val(0.8f);
-
+      m_logger = Logging::create_logger("DRAM Controller");
       m_scheduler = create_child_ifce<IScheduler>();
       m_refresh = create_child_ifce<IRefreshManager>();    
       m_rowpolicy = create_child_ifce<IRowPolicy>();    
@@ -107,7 +109,9 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
       register_stat(s_priority_queue_len_avg).name("priority_queue_len_avg_{}", m_channel_id);
 
       register_stat(s_read_latency).name("read_latency_{}", m_channel_id);
+      register_stat(s_write_latency).name("write_latency_{}", m_channel_id);
       register_stat(s_avg_read_latency).name("avg_read_latency_{}", m_channel_id);
+      register_stat(s_avg_write_latency).name("avg_write_latency_{}", m_channel_id);
     };
 
     bool send(Request& req) override {
@@ -252,22 +256,24 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
     void update_request_stats(ReqBuffer::iterator& req)
     {
       req->is_stat_updated = true;
-
       if (req->type_id == Request::Type::Read) 
       {
         if (is_row_hit(req)) {
           s_read_row_hits++;
           s_row_hits++;
+          s_read_latency += m_dram->m_read_hit_latency;//Fan Li
           if (req->source_id != -1)
             s_read_row_hits_per_core[req->source_id]++;
         } else if (is_row_open(req)) {
           s_read_row_conflicts++;
           s_row_conflicts++;
+          s_read_latency += m_dram->m_read_conflict_latency;//Fan Li
           if (req->source_id != -1)
             s_read_row_conflicts_per_core[req->source_id]++;
         } else {
           s_read_row_misses++;
           s_row_misses++;
+          s_read_latency += m_dram->m_read_miss_latency;//Fan Li
           if (req->source_id != -1)
             s_read_row_misses_per_core[req->source_id]++;
         } 
@@ -277,12 +283,15 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
         if (is_row_hit(req)) {
           s_write_row_hits++;
           s_row_hits++;
+          s_write_latency += m_dram->m_write_hit_latency;//Fan Li
         } else if (is_row_open(req)) {
           s_write_row_conflicts++;
           s_row_conflicts++;
+          s_write_latency += m_dram->m_write_conflict_latency;//Fan Li
         } else {
           s_write_row_misses++;
           s_row_misses++;
+          s_write_latency += m_dram->m_write_miss_latency;//Fan Li
         }
       }
     }
@@ -400,6 +409,7 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
 
     void finalize() override {
       s_avg_read_latency = (float) s_read_latency / (float) s_num_read_reqs;
+      s_avg_write_latency = (float) s_write_latency / (float) s_num_write_reqs;
 
       s_queue_len_avg = (float) s_queue_len / (float) m_clk;
       s_read_queue_len_avg = (float) s_read_queue_len / (float) m_clk;

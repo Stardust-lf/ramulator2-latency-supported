@@ -107,7 +107,10 @@ class SimpleO3 final : public IFrontEnd, public Implementation {
       for (auto core : m_cores) {
         if (!(core->reached_expected_num_insts)){
           return false;
-        }
+        }  //Fan Li
+        // if (m_clk >= 100000000){
+        //   return false;
+        // }
       }
       return true;
     }

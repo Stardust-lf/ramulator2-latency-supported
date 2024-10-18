@@ -26,7 +26,6 @@ class GenericDRAMSystem final : public IMemorySystem, public Implementation {
       // Create device (a top-level node wrapping all channel nodes)
       m_dram = create_child_ifce<IDRAM>();
       m_addr_mapper = create_child_ifce<IAddrMapper>();
-
       int num_channels = m_dram->get_level_size("channel");   
 
       // Create memory controllers

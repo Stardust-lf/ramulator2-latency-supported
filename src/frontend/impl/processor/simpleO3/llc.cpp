@@ -19,7 +19,6 @@ m_latency(latency), m_size_bytes(size_bytes), m_linesize_bytes(linesize_bytes), 
 
 void SimpleO3LLC::tick() {
   m_clk++;
-
   // Send miss requests to the memory system when LLC latency is met
   // TODO: Optimization by assuming in-order issue?
   auto it = m_miss_list.begin(); 
