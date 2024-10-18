@@ -4,7 +4,7 @@ Frontend:
   num_expected_insts: 10000000
   traces: 
     - ctraces/605.trace
-  llc_capacity_per_core: 2MB
+  llc_capacity_per_core: 1MB
   Translation:
     impl: NoTranslation
     max_addr: 2147483648

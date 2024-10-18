@@ -25,6 +25,12 @@ MemorySystem:
       preset: DDR4_3200W
     RFM:
       BRC: 2
+    drampower_enable: False
+    voltage:
+      present: Default
+    current:
+      present: Default
+    power_debug: True
 
   Controller:
     impl: Generic

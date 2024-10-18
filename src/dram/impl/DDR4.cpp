@@ -548,7 +548,6 @@ class DDR4 : public IDRAM, public Implementation {
     void set_powers() {
       
       m_drampower_enable = param<bool>("drampower_enable").default_val(false);
-
       if (!m_drampower_enable)
         return;
 
@@ -598,6 +597,7 @@ class DDR4 : public IDRAM, public Implementation {
       m_powers[m_levels["rank"]][m_commands["REFab"]] = Lambdas::Power::Rank::REFab<DDR4>;
       m_powers[m_levels["rank"]][m_commands["REFab_end"]] = Lambdas::Power::Rank::REFab_end<DDR4>;
 
+      m_logger->info("Registering BG energy");
       // register stats
       register_stat(s_total_background_energy).name("total_background_energy");
       register_stat(s_total_cmd_energy).name("total_cmd_energy");

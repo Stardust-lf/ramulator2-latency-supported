@@ -22,7 +22,6 @@ class LinearMapperBase : public IAddrMapper {
   protected:
     void setup(IFrontEnd* frontend, IMemorySystem* memory_system) {
       m_dram = memory_system->get_ifce<IDRAM>();
-
       // Populate m_addr_bits vector with the number of address bits for each level in the hierachy
       const auto& count = m_dram->m_organization.count;
       m_num_levels = count.size();
