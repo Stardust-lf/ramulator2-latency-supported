@@ -2,7 +2,6 @@
 #include <iostream>
 #include <fstream>
 #include <spdlog/spdlog.h>
-
 #include "base/exception.h"
 #include "base/utils.h"
 #include "frontend/impl/processor/simpleO3/core.h"
@@ -108,6 +107,7 @@ m_id(id), m_window(ipc, depth), m_trace(trace_path), m_num_expected_insts(num_ex
   m_num_bubbles = inst.bubble_count;
   m_load_addr = inst.load_addr;
   m_writeback_addr = inst.store_addr;
+  
 }
 
 void SimpleO3Core::tick() {
@@ -134,8 +134,9 @@ void SimpleO3Core::tick() {
     m_num_bubbles--;
   }
 
-  // Second, try to send the load to the LLC
-  if (m_load_addr != -1) {
+  // Second, try to send the load to the LLC (Fan Li modified)
+  //if (m_load_addr != -1)
+  if (m_load_addr != -1 & m_writeback_addr == -1) { //We only use write for store command to show writting performance
     if (num_inserted_insts == m_window.m_ipc) {
       return;
     }

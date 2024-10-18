@@ -103,6 +103,8 @@ class SimpleO3Core : public Clocked<SimpleO3Core> {
     size_t s_insts_retired = 0; 
     size_t s_cycles_recorded = 0; 
     Clk_t  s_mem_access_cycles = 0; 
+    size_t m_load_count = 0;
+    size_t m_store_count = 0;
 
   public:
     SimpleO3Core(int id, int ipc, int depth, size_t num_expected_insts, std::string trace_path, ITranslation* translation, SimpleO3LLC* llc);

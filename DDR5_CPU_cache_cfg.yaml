@@ -1,7 +1,7 @@
 Frontend:
   impl: SimpleO3
   clock_ratio: 8
-  num_expected_insts: 1000000
+  num_expected_insts: 10000000
   traces: 
     - ctraces/605.trace
   llc_capacity_per_core: 2MB
