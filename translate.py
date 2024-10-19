@@ -1,5 +1,6 @@
 
-for trace in [600,602,605,625,631,657,641,648,620,623]:
+#for trace in [600,602,605,625,631,657,641,648,620,623]:
+for trace in [603,607,619,621,628,638,644,649,654]:
     lc, w, r = 0, 0, 0
     with open('/home/fan/projects/ramulator2/ctraces/{}.trace'.format(trace), 'w+') as fout:
         with open('ori_trace/{}.trace'.format(trace)) as f:

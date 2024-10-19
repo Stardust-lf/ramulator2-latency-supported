@@ -2,83 +2,76 @@ import os
 import yaml
 import subprocess
 import re
-import matplotlib.pyplot as plt
+import pandas as pd
 
+# Directory containing the configuration files
+config_dir = "exp_cfgs/"
+trace_files = [600, 602, 605, 625, 631, 657, 641, 648, 620, 623, 603, 607, 619, 621, 628, 638, 644, 649, 654]
 tCK_DDR4 = 1250
 tCK_DDR5 = 625
+
+
 def extract_info(output):
     """
-    从输出字符串中提取所有信息并返回为字典
-    :param output: 模拟器的输出字符串
-    :return: 包含所有信息的字典
+    Extracts all numerical information from the simulator output string and returns it as a dictionary.
+    :param output: The output string from the simulator.
+    :return: A dictionary containing all the extracted information.
     """
     info_dict = {}
 
-    # 匹配输出中的键值对，允许带有数字、下划线、字母的键和值
+    # Regex pattern to match key-value pairs in the output (allowing numbers, underscores, and letters)
     matches = re.findall(r"(\w+):\s*([\d.]+)", output)
 
     for match in matches:
         key = match[0]
         try:
             value = float(match[1])
-        except Exception:
-            continue
+        except ValueError:
+            value = None
         info_dict[key] = value
 
     return info_dict
 
 
+# Initialize lists to store latencies for each config
+latency_results = []
 
-# 初始化
-DDR4_config_file = "./DDR4_CPU_cache_cfg.yaml"
-DDR5_config_file = "./DDR5_CPU_cache_cfg.yaml"
-fixed_nRCD = 15  # 固定的 nRCD 值
+# Fetch all YAML configuration files from the directory
+config_files = [f for f in os.listdir(config_dir) if f.endswith('.yaml')]
 
-# 存储延迟结果
-ddr4_latencies = []
-ddr5_latencies = []
+# Loop through all the configuration files and trace files to run the simulation
+for config_file in config_files:
+    for filename in trace_files:
+        print(f'Running simulation for config {config_file} and trace {filename}')
+        trace_file = f"/home/fan/projects/ramulator2/ctraces/{filename}.trace"
 
-# 加载配置文件
-with open(DDR4_config_file, 'r') as f:
-    DDR4_config = yaml.safe_load(f)
+        # Load the configuration file
+        config_path = os.path.join(config_dir, config_file)
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
 
-with open(DDR5_config_file, 'r') as f:
-    DDR5_config = yaml.safe_load(f)
+        # Update the trace file in the config
+        config['Frontend']['traces'] = [trace_file]
 
+        # Save the updated configuration to a temporary file
+        temp_config_path = "./temp/temp_config.yaml"
+        yaml_config_str = yaml.dump(config)
+        with open(temp_config_path, 'w+') as temp_config:
+            temp_config.write(yaml_config_str)
 
-# 生成 trace 文件并运行模拟器
-trace_files = [600,602,605,625,631,657,641,648,620,623]
-#trace_files = [600,602,603,605,607,619,620,623,625,631,641,648]
-#trace_files = ['600']
-for filename in trace_files:
-    print('Trace: ', filename)
-    trace_file = "/home/fan/projects/ramulator2/ctraces/{}.trace".format(filename)
+        # Run the simulation and capture the output
+        result = subprocess.run(['./ramulator2', '-f', temp_config_path], capture_output=True, text=True)
 
-    # 更新配置文件中的 trace 路径
-    DDR4_config['Frontend']['traces'] = [trace_file]
-    DDR5_config['Frontend']['traces'] = [trace_file]
+        # Extract relevant data
+        extracted_data = extract_info(result.stdout)
 
-    print('Simulating on DDR4')
-    # 运行并捕获 DDR4 配置的模拟器输出
-    yaml_config_str = yaml.dump(DDR4_config)
-    with open("./temp/temp_DDR4_config.yaml", 'w+') as temp_config:
-        temp_config.write(yaml_config_str)
-    result = subprocess.run(['./ramulator2', '-f', './temp/temp_DDR4_config.yaml'], capture_output=True, text=True)
-    print(result)
-    ddr4_latencies.append(extract_info(result.stdout))
+        # Append extracted data to the results list
+        latency_results.append({"config": config_file, "trace": filename, **extracted_data})
 
-    print('Simulating on DDR5')
-    # 运行并捕获 DDR5 配置的模拟器输出
-    yaml_config_str = yaml.dump(DDR5_config)
-    with open("./temp/temp_DDR5_config.yaml", 'w+') as temp_config:
-        temp_config.write(yaml_config_str)
-    result = subprocess.run(['./ramulator2', '-f', './temp/temp_DDR5_config.yaml'], capture_output=True, text=True)
-    ddr5_latencies.append(extract_info(result.stdout))
+# Convert the latencies to pandas DataFrame and handle NaN values
+latency_df = pd.DataFrame(latency_results).fillna('NaN')
 
-print(ddr4_latencies)
-print(ddr5_latencies)
-import pickle
-with open('int_latency_comp','wb+') as f:
-    pickle.dump([trace_files,ddr4_latencies,ddr5_latencies],f)
-    print('Saving Complete')
+# Save the result to CSV
+latency_df.to_csv('latency_results.csv', index=False)
 
+print('All simulations are complete, and the results have been saved.')

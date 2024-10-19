@@ -7,7 +7,7 @@ Frontend:
   llc_capacity_per_core: 1MB
   num_expected_insts: 10000000
   traces:
-  - /home/fan/projects/ramulator2/ctraces/623.trace
+  - /home/fan/projects/ramulator2/ctraces/654.trace
 MemorySystem:
   AddrMapper:
     impl: RoBaRaCoCh

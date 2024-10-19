@@ -34,7 +34,7 @@ MemorySystem:
       rank: 2
     power_debug: true
     timing:
-      preset: DDR4_3200W
+      preset: DDR4_2933V
     voltage:
       present: Default
   clock_ratio: 3
