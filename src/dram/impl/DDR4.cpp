@@ -432,8 +432,8 @@ class DDR4 : public IDRAM, public Implementation {
       }      
 
       // Set read latency
-      m_read_latency = m_timing_vals("nCL") + m_timing_vals("nBL");
-      m_write_latency = m_timing_vals("nCWL") + m_timing_vals("nBL");
+      m_read_latency = m_timing_vals("nCL") + m_timing_vals("nBL"); //same to hit
+      m_write_latency = m_timing_vals("nCWL") + m_timing_vals("nBL") + m_timing_vals("nWR"); //same to hit
       //Fan Li
       m_read_hit_latency = m_timing_vals("nCL") + m_timing_vals("nBL");
       m_read_miss_latency = m_timing_vals("nRCD") + m_timing_vals("nCL") + m_timing_vals("nBL");

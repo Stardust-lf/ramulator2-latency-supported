@@ -24,6 +24,7 @@ struct Request {
 
   int type_id = -1;    // An identifier for the type of the request
   int source_id = -1;  // An identifier for where the request is coming from (e.g., which core)
+  int stat_id = -1; //An identifier for the hit/miss/coflict status 0 = hit 1 = miss 2 = conflict Fan Li modified
 
   int command = -1;          // The command that need to be issued to progress the request
   int final_command = -1;    // The final command that is needed to finish the request
