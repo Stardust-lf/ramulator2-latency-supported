@@ -219,6 +219,7 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
                 req_it->depart = m_clk + m_dram->m_read_conflict_latency;
             }
             
+            
             pending.push_back(*req_it);
           } else if (req_it->type_id == Request::Type::Write) {
             switch (req_it->stat_id){
