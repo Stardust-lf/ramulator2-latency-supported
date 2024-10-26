@@ -182,7 +182,7 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
       s_priority_queue_len += m_priority_buffer.size();
 
       // 1. Serve completed reads
-      serve_completed_reads();
+      serve_completed_requests();
 
       m_refresh->tick();
 
@@ -325,7 +325,7 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
      * It checks the pending queue to see if the top request has received data from DRAM.
      * If so, it finishes this request by calling its callback and poping it from the pending queue.
      */
-    void serve_completed_reads() {
+    void serve_completed_requests() {
       if (pending.size()) {
         // Check the first pending request
         auto& req = pending[0];
