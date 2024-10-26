@@ -211,23 +211,23 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
         if (req_it->command == req_it->final_command) {
           if (req_it->type_id == Request::Type::Read) {
             switch (req_it->stat_id){
-              case 0:
+              case Request::Stat::Hit:
                 req_it->depart = m_clk + m_dram->m_read_latency;
-              case 1:
+              case Request::Stat::Miss:
                 req_it->depart = m_clk + m_dram->m_read_miss_latency;
-              case 2:
+              case Request::Stat::Conflict:
                 req_it->depart = m_clk + m_dram->m_read_conflict_latency;
             }
-            
+
             
             pending.push_back(*req_it);
           } else if (req_it->type_id == Request::Type::Write) {
             switch (req_it->stat_id){
-              case 0:
+              case Request::Stat::Hit:
                 req_it->depart = m_clk + m_dram->m_write_latency;
-              case 1:
+              case Request::Stat::Miss:
                 req_it->depart = m_clk + m_dram->m_write_miss_latency;
-              case 2:
+              case Request::Stat::Conflict:
                 req_it->depart = m_clk + m_dram->m_write_conflict_latency;
             }
             pending.push_back(*req_it);
@@ -276,21 +276,21 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
       if (req->type_id == Request::Type::Read) 
       {
         if (is_row_hit(req)) {
-          req->stat_id = 0;
+          req->stat_id = Request::Stat::Hit;
           s_read_row_hits++;
           s_row_hits++;
           //s_read_latency += m_dram->m_read_hit_latency;//Fan Li
           if (req->source_id != -1)
             s_read_row_hits_per_core[req->source_id]++;
         } else if (is_row_open(req)) {
-          req->stat_id = 2;
+          req->stat_id = Request::Stat::Conflict;
           s_read_row_conflicts++;
           s_row_conflicts++;
           //s_read_latency += m_dram->m_read_conflict_latency;//Fan Li
           if (req->source_id != -1)
             s_read_row_conflicts_per_core[req->source_id]++;
         } else {
-          req->stat_id = 1;
+          req->stat_id = Request::Stat::Miss;
           s_read_row_misses++;
           s_row_misses++;
           //s_read_latency += m_dram->m_read_miss_latency;//Fan Li
@@ -301,17 +301,17 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
       else if (req->type_id == Request::Type::Write) 
       {
         if (is_row_hit(req)) {
-          req->stat_id = 0;
+          req->stat_id = Request::Stat::Hit;
           s_write_row_hits++;
           s_row_hits++;
           //s_write_latency += m_dram->m_write_hit_latency;//Fan Li
         } else if (is_row_open(req)) {
-          req->stat_id = 2;
+          req->stat_id = Request::Stat::Conflict;
           s_write_row_conflicts++;
           s_row_conflicts++;
           //s_write_latency += m_dram->m_write_conflict_latency;//Fan Li
         } else {
-          req->stat_id = 1;
+          req->stat_id = Request::Stat::Miss;
           s_write_row_misses++;
           s_row_misses++;
           //s_write_latency += m_dram->m_write_miss_latency;//Fan Li

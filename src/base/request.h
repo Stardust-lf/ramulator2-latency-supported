@@ -22,6 +22,14 @@ struct Request {
     };
   };
 
+  struct Stat {
+    enum : int {
+      Hit = 0,
+      Miss = 1,
+      Conflict = 2
+    };
+  };
+  
   int type_id = -1;    // An identifier for the type of the request
   int source_id = -1;  // An identifier for where the request is coming from (e.g., which core)
   int stat_id = -1; //An identifier for the hit/miss/coflict status 0 = hit 1 = miss 2 = conflict Fan Li modified
