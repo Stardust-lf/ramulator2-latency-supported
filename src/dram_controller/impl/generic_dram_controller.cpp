@@ -279,21 +279,18 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
           req->stat_id = Request::Stat::Hit;
           s_read_row_hits++;
           s_row_hits++;
-          //s_read_latency += m_dram->m_read_hit_latency;//Fan Li
           if (req->source_id != -1)
             s_read_row_hits_per_core[req->source_id]++;
         } else if (is_row_open(req)) {
           req->stat_id = Request::Stat::Conflict;
           s_read_row_conflicts++;
           s_row_conflicts++;
-          //s_read_latency += m_dram->m_read_conflict_latency;//Fan Li
           if (req->source_id != -1)
             s_read_row_conflicts_per_core[req->source_id]++;
         } else {
           req->stat_id = Request::Stat::Miss;
           s_read_row_misses++;
           s_row_misses++;
-          //s_read_latency += m_dram->m_read_miss_latency;//Fan Li
           if (req->source_id != -1)
             s_read_row_misses_per_core[req->source_id]++;
         } 
@@ -304,17 +301,14 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
           req->stat_id = Request::Stat::Hit;
           s_write_row_hits++;
           s_row_hits++;
-          //s_write_latency += m_dram->m_write_hit_latency;//Fan Li
         } else if (is_row_open(req)) {
           req->stat_id = Request::Stat::Conflict;
           s_write_row_conflicts++;
           s_row_conflicts++;
-          //s_write_latency += m_dram->m_write_conflict_latency;//Fan Li
         } else {
           req->stat_id = Request::Stat::Miss;
           s_write_row_misses++;
           s_row_misses++;
-          //s_write_latency += m_dram->m_write_miss_latency;//Fan Li
         }
       }
     }
