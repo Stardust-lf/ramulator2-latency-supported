@@ -7,7 +7,7 @@ Frontend:
   llc_capacity_per_core: 1MB
   num_expected_insts: 10000000
   traces:
-  - ../ctraces/654.trace
+  - ../ctraces/619.trace
 MemorySystem:
   AddrMapper:
     impl: RoBaRaCoCh
@@ -19,23 +19,18 @@ MemorySystem:
       impl: OpenRowPolicy
     Scheduler:
       impl: FRFCFS
-    impl: Generic
+    impl: Sustainable
     plugins: null
+    slow_chip_perf: 1.0
   DRAM:
     RFM:
       BRC: 2
-    current:
-      present: Default
-    drampower_enable: false
-    impl: DDR4
+    impl: DDR5
     org:
       channel: 1
-      preset: DDR4_16Gb_x4
+      preset: DDR5_16Gb_x4
       rank: 2
-    power_debug: true
     timing:
-      preset: DDR4_2933V
-    voltage:
-      present: Default
+      preset: DDR5_3200AN
   clock_ratio: 3
   impl: GenericDRAM

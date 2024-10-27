@@ -5,7 +5,7 @@ import re
 import pandas as pd
 
 # Directory containing the configuration files
-config_dir = "../exp_cfgs/"
+config_dir = "../base_exp_cfgs/"
 trace_files = [600, 602, 605, 625, 631, 657, 641, 648, 620, 623, 603, 607, 619, 621, 628, 638, 644, 649, 654]
 tCK_DDR4 = 1250
 tCK_DDR5 = 625
