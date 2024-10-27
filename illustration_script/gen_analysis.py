@@ -5,7 +5,7 @@ import re
 import pandas as pd
 
 # Directory containing the configuration files
-config_dir = "exp_cfgs/"
+config_dir = "../exp_cfgs/"
 trace_files = [600, 602, 605, 625, 631, 657, 641, 648, 620, 623, 603, 607, 619, 621, 628, 638, 644, 649, 654]
 tCK_DDR4 = 1250
 tCK_DDR5 = 625
@@ -43,7 +43,7 @@ config_files = [f for f in os.listdir(config_dir) if f.endswith('.yaml')]
 for config_file in config_files:
     for filename in trace_files:
         print(f'Running simulation for config {config_file} and trace {filename}')
-        trace_file = f"/home/fan/projects/ramulator2/ctraces/{filename}.trace"
+        trace_file = f"../ctraces/{filename}.trace"
 
         # Load the configuration file
         config_path = os.path.join(config_dir, config_file)
@@ -54,13 +54,13 @@ for config_file in config_files:
         config['Frontend']['traces'] = [trace_file]
 
         # Save the updated configuration to a temporary file
-        temp_config_path = "./temp/temp_config.yaml"
+        temp_config_path = "../temp/temp_config.yaml"
         yaml_config_str = yaml.dump(config)
         with open(temp_config_path, 'w+') as temp_config:
             temp_config.write(yaml_config_str)
 
         # Run the simulation and capture the output
-        result = subprocess.run(['./ramulator2', '-f', temp_config_path], capture_output=True, text=True)
+        result = subprocess.run(['../ramulator2', '-f', temp_config_path], capture_output=True, text=True)
 
         # Extract relevant data
         extracted_data = extract_info(result.stdout)

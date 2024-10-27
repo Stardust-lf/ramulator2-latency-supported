@@ -1,0 +1,49 @@
+Frontend:
+  impl: SimpleO3
+  clock_ratio: 8
+  num_expected_insts: 10000000
+  traces: 
+    - ctraces/605.trace
+  llc_capacity_per_core: 1MB
+
+  Translation:
+    impl: NoTranslation
+    max_addr: 2147483648
+              
+
+MemorySystem:
+  impl: GenericDRAM
+  clock_ratio: 3
+
+  DRAM:
+    impl: DDR4
+    org:
+      preset: DDR4_16Gb_x4
+      channel: 1
+      rank: 2
+    timing:
+      preset: DDR4_3200W
+    RFM:
+      BRC: 2
+    drampower_enable: False
+    voltage:
+      present: Default
+    current:
+      present: Default
+    power_debug: True
+
+  Controller:
+    impl: Sustainable
+    Scheduler:
+      impl: FRFCFS
+    RefreshManager:
+      impl: AllBank
+    RowPolicy:
+      impl: OpenRowPolicy
+      cap: 4
+    plugins:
+    slow_chip_perf: 0.8
+    wr_high_watermark: 0.8
+
+  AddrMapper:
+    impl: RoBaRaCoCh
