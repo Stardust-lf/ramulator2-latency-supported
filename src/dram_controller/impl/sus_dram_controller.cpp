@@ -19,6 +19,7 @@ class SusDRAMController final : public IDRAMController, public Implementation {
     float m_wr_low_watermark;
     float m_wr_high_watermark;
     bool  m_is_write_mode = false;
+    bool  m_prev_read = true;
 
     size_t s_row_hits = 0;
     size_t s_row_misses = 0;
@@ -29,6 +30,7 @@ class SusDRAMController final : public IDRAMController, public Implementation {
     size_t s_write_row_hits = 0;
     size_t s_write_row_misses = 0;
     size_t s_write_row_conflicts = 0;
+    size_t s_write_waiting_cycles = 0;
 
     size_t m_num_cores = 0;
     std::vector<size_t> s_read_row_hits_per_core;
@@ -114,6 +116,7 @@ class SusDRAMController final : public IDRAMController, public Implementation {
       register_stat(s_write_latency).name("write_latency_{}", m_channel_id);
       register_stat(s_avg_read_latency).name("avg_read_latency_{}", m_channel_id);
       register_stat(s_avg_write_latency).name("avg_write_latency_{}", m_channel_id);
+      register_stat(s_write_waiting_cycles).name("slow_chip_waiting_cycles_{}",m_channel_id);
     };
 
     bool send(Request& req) override {
@@ -324,8 +327,32 @@ class SusDRAMController final : public IDRAMController, public Implementation {
       }
     }
 
-    void serve_slow_pending_requests(){
-      
+    void tick_pending_buffer(){
+      auto& req = pending[0];
+      if (req.depart <= m_clk){
+        if (req.type_id == Request::Type::Read) {
+          s_read_latency += m_clk - req.arrive;
+          m_prev_read = true;
+        }
+        else if (req.type_id == Request::Type::Write){
+          s_write_latency += m_clk - req.arrive;
+          m_prev_read = false;
+        }
+        if (req.callback){
+          req.callback(req);
+        }
+        pending.pop_front();
+      }
+    }
+
+    void tick_slow_pending_buffer(){
+      auto& slowreq = slow_pending[0];
+      if (slowreq.depart <= m_clk){             
+        if (slowreq.callback){
+            slowreq.callback(slowreq);
+          }
+          slow_pending.pop_front(); 
+        }
     }
     /**
      * @brief    Helper function to serve the completed read requests
@@ -335,32 +362,23 @@ class SusDRAMController final : public IDRAMController, public Implementation {
      * If so, it finishes this request by calling its callback and poping it from the pending queue.
      */
     void serve_completed_requests() {
-      if (pending.size()) {
+      if (pending.size() || slow_pending.size()) {
         // Check the first pending request
         auto& req = pending[0];
-        if (slow_pending.size() != 0 && req.type_id == Request::Type::Write){
-          
+        auto& slowreq = slow_pending[0];
+        if (slow_pending.size() != 0){
+          if (req.type_id == Request::Type::Read || req.depart == slowreq.depart || m_prev_read == false){
+            //Update normal pending buffer
+            tick_pending_buffer();
+          }
+          else{
+            s_write_waiting_cycles ++ ;
+          }
+          //Update slow buffer
+          tick_slow_pending_buffer();
         }
-        if (req.depart <= m_clk) {
-          // Request received data from dram
-          if (req.depart - req.arrive > 1) {
-            if (req.type_id == Request::Type::Read) {
-              s_read_latency += m_clk - req.arrive;
-            }
-            else if (req.type_id == Request::Type::Write){
-              s_write_latency += m_clk - req.arrive;
-            }
-            // Check if this requests accesses the DRAM or is being forwarded.
-            // TODO add the stats back
-            //s_read_latency += req.depart - req.arrive;
-          }
-
-          if (req.callback) {
-            // If the request comes from outside (e.g., processor), call its callback
-            req.callback(req);
-          }
-          // Finally, remove this request from the pending queue
-          pending.pop_front();
+        else{
+          tick_pending_buffer();
         }
       };
     };

@@ -328,10 +328,10 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
           // Request received data from dram
           if (req.depart - req.arrive > 1) {
             if (req.type_id == Request::Type::Read) {
-              s_read_latency += req.depart - req.arrive;
+              s_read_latency += m_clk - req.arrive;
             }
             else if (req.type_id == Request::Type::Write){
-              s_write_latency += req.depart - req.arrive;
+              s_write_latency += m_clk - req.arrive;
             }
             // Check if this requests accesses the DRAM or is being forwarded.
             // TODO add the stats back
