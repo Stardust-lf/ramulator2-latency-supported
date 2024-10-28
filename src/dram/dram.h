@@ -59,13 +59,6 @@ class IDRAM : public Clocked<IDRAM> {
     Clk_t m_read_latency = -1;          // Number of cycles needed between issuing RD command and receiving data.
     Clk_t m_write_latency = -1; 
 
-    Clk_t m_read_hit_latency = -1;          
-    Clk_t m_read_miss_latency = -1;  
-    Clk_t m_read_conflict_latency = -1;  
-            // Fan Li modified
-    Clk_t m_write_hit_latency = -1;
-    Clk_t m_write_miss_latency = -1;
-    Clk_t m_write_conflict_latency = -1;
   /***********************************************
    *                   Power
    ***********************************************/

@@ -3,8 +3,8 @@
 
 namespace Ramulator {
 
-class SusDRAMController final : public IDRAMController, public Implementation {
-  RAMULATOR_REGISTER_IMPLEMENTATION(IDRAMController, SusDRAMController, "Sustainable", "DRAM controller for sustainable design.");
+class DualDRAMController final : public IDRAMController, public Implementation {
+  RAMULATOR_REGISTER_IMPLEMENTATION(IDRAMController, DualDRAMController, "Dual", "DRAM controller for sustainable design.");
   private:
     std::deque<Request> pending;          // A queue for read requests that are about to finish (callback after RL)
     std::deque<Request> slow_pending;     // Slower write-only pending buffer(for slower recyle chips)
@@ -215,35 +215,12 @@ class SusDRAMController final : public IDRAMController, public Implementation {
         // If we are issuing the last command, set depart clock cycle and move the request to the pending queue
         if (req_it->command == req_it->final_command) {
           if (req_it->type_id == Request::Type::Read) {
-            switch (req_it->stat_id){
-              case Request::Stat::Hit:
-                req_it->depart = m_clk + m_dram->m_read_latency;
-              case Request::Stat::Miss:
-                req_it->depart = m_clk + m_dram->m_read_miss_latency;
-              case Request::Stat::Conflict:
-                req_it->depart = m_clk + m_dram->m_read_conflict_latency;
-            }
-
-            
+            req_it->depart = m_clk + m_dram->m_read_latency;
             pending.push_back(*req_it);
           } else if (req_it->type_id == Request::Type::Write) {
-            switch (req_it->stat_id){
-              case Request::Stat::Hit:
-                req_it->depart = m_clk + m_dram->m_write_latency;
-              case Request::Stat::Miss:
-                req_it->depart = m_clk + m_dram->m_write_miss_latency;
-              case Request::Stat::Conflict:
-                req_it->depart = m_clk + m_dram->m_write_conflict_latency;
-            }
+            req_it->depart = m_clk;
             pending.push_back(*req_it);
-            switch (req_it->stat_id){
-              case Request::Stat::Hit:
-                req_it->depart = m_clk + int(m_dram->m_write_latency / m_slow_write_perf);
-              case Request::Stat::Miss:
-                req_it->depart = m_clk + int(m_dram->m_write_miss_latency / m_slow_write_perf);
-              case Request::Stat::Conflict:
-                req_it->depart = m_clk + int(m_dram->m_write_conflict_latency / m_slow_write_perf);
-            }
+            req_it->depart = m_clk + int((m_clk - req_it->arrive) / m_slow_write_perf);
             slow_pending.push_back(*req_it);
           }
           buffer->remove(req_it);
@@ -290,19 +267,16 @@ class SusDRAMController final : public IDRAMController, public Implementation {
       if (req->type_id == Request::Type::Read) 
       {
         if (is_row_hit(req)) {
-          req->stat_id = Request::Stat::Hit;
           s_read_row_hits++;
           s_row_hits++;
           if (req->source_id != -1)
             s_read_row_hits_per_core[req->source_id]++;
         } else if (is_row_open(req)) {
-          req->stat_id = Request::Stat::Conflict;
           s_read_row_conflicts++;
           s_row_conflicts++;
           if (req->source_id != -1)
             s_read_row_conflicts_per_core[req->source_id]++;
         } else {
-          req->stat_id = Request::Stat::Miss;
           s_read_row_misses++;
           s_row_misses++;
           if (req->source_id != -1)
@@ -312,15 +286,12 @@ class SusDRAMController final : public IDRAMController, public Implementation {
       else if (req->type_id == Request::Type::Write) 
       {
         if (is_row_hit(req)) {
-          req->stat_id = Request::Stat::Hit;
           s_write_row_hits++;
           s_row_hits++;
         } else if (is_row_open(req)) {
-          req->stat_id = Request::Stat::Conflict;
           s_write_row_conflicts++;
           s_row_conflicts++;
         } else {
-          req->stat_id = Request::Stat::Miss;
           s_write_row_misses++;
           s_row_misses++;
         }
@@ -331,11 +302,11 @@ class SusDRAMController final : public IDRAMController, public Implementation {
       auto& req = pending[0];
       if (req.depart <= m_clk){
         if (req.type_id == Request::Type::Read) {
-          s_read_latency += m_clk - req.arrive;
+          s_read_latency += req.depart - req.arrive;
           m_prev_read = true;
         }
         else if (req.type_id == Request::Type::Write){
-          s_write_latency += m_clk - req.arrive;
+          s_write_latency += req.depart - req.arrive;
           m_prev_read = false;
         }
         if (req.callback){

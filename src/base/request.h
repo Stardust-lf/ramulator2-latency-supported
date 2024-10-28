@@ -21,14 +21,6 @@ struct Request {
       Write,
     };
   };
-
-  struct Stat {
-    enum : int {
-      Hit = 0,
-      Miss = 1,
-      Conflict = 2
-    };
-  };
   
   int type_id = -1;    // An identifier for the type of the request
   int source_id = -1;  // An identifier for where the request is coming from (e.g., which core)

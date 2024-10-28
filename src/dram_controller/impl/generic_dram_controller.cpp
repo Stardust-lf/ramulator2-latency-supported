@@ -57,7 +57,6 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
     void init() override {
       m_wr_low_watermark =  param<float>("wr_low_watermark").desc("Threshold for switching back to read mode.").default_val(0.2f);
       m_wr_high_watermark = param<float>("wr_high_watermark").desc("Threshold for switching to write mode.").default_val(0.8f);
-
       m_scheduler = create_child_ifce<IScheduler>();
       m_refresh = create_child_ifce<IRefreshManager>();    
       m_rowpolicy = create_child_ifce<IRowPolicy>();    
@@ -173,7 +172,7 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
       return is_success;
     }
 
-    void tick() override {
+        void tick() override {
       m_clk++;
 
       // Update statistics
@@ -206,8 +205,8 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
         if (req_it->is_stat_updated == false) {
           update_request_stats(req_it);
         }
-        m_dram->issue_command(req_it->command, req_it->addr_vec);
 
+        m_dram->issue_command(req_it->command, req_it->addr_vec);
         // If we are issuing the last command, set depart clock cycle and move the request to the pending queue
         if (req_it->command == req_it->final_command) {
           if (req_it->type_id == Request::Type::Read) {
@@ -330,7 +329,6 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
       if (!m_is_write_mode) {
         if ((m_write_buffer.size() > m_wr_high_watermark * m_write_buffer.max_size) || m_read_buffer.size() == 0) {
           m_is_write_mode = true;
-
         }
       } else {
         if ((m_write_buffer.size() < m_wr_low_watermark * m_write_buffer.max_size) && m_read_buffer.size() != 0) {

@@ -28,6 +28,7 @@ class IDRAMController : public Clocked<IDRAMController> {
     std::vector<IControllerPlugin*> m_plugins;
 
     int m_channel_id = -1;
+
   public:
     /**
      * @brief       Send a request to the memory controller.
