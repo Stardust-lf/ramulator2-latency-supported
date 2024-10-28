@@ -11,7 +11,7 @@ plt.rcParams["font.family"] = "Times New Roman"
 
 # 过滤掉 'avg_write_latency_0' 为 0 的数据
 df_filtered = df[(df['chip_width'] == 'x4') & (df['avg_write_latency_0'] > 0)]  # 只保留写延迟大于 0 的行
-
+#df_filtered = df
 # 计算每个 config 的平均值
 df_grouped = df_filtered.groupby(['trace', 'memory_type']).agg({
     'avg_read_latency_0': 'mean',
