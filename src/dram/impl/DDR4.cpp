@@ -432,17 +432,8 @@ class DDR4 : public IDRAM, public Implementation {
       }      
 
       // Set read latency
-      m_read_latency = m_timing_vals("nCL") + m_timing_vals("nBL"); //same to hit
-      m_write_latency = m_timing_vals("nCWL") + m_timing_vals("nBL") + m_timing_vals("nWR"); //same to hit
-      //Fan Li
-      m_read_hit_latency = m_timing_vals("nCL") + m_timing_vals("nBL");
-      m_read_miss_latency = m_timing_vals("nRCD") + m_timing_vals("nCL") + m_timing_vals("nBL");
-      m_read_conflict_latency = m_timing_vals("nRP") + m_timing_vals("nRCD") + m_timing_vals("nCL") + m_timing_vals("nBL");
-      //Fan Li
-      m_write_hit_latency = m_timing_vals("nCWL") + m_timing_vals("nBL") + m_timing_vals("nWR");
-      m_write_miss_latency = m_timing_vals("nRCD") + m_timing_vals("nCWL") + m_timing_vals("nBL") + m_timing_vals("nWR");
-      m_write_conflict_latency = m_timing_vals("nRP") + m_timing_vals("nRCD") + m_timing_vals("nCWL") + m_timing_vals("nBL") + m_timing_vals("nWR");
-      
+      m_read_latency = m_timing_vals("nCL") + m_timing_vals("nBL");
+
       // Populate the timing constraints
       #define V(timing) (m_timing_vals(timing))
       populate_timingcons(this, {
@@ -548,6 +539,7 @@ class DDR4 : public IDRAM, public Implementation {
     void set_powers() {
       
       m_drampower_enable = param<bool>("drampower_enable").default_val(false);
+
       if (!m_drampower_enable)
         return;
 
@@ -597,7 +589,6 @@ class DDR4 : public IDRAM, public Implementation {
       m_powers[m_levels["rank"]][m_commands["REFab"]] = Lambdas::Power::Rank::REFab<DDR4>;
       m_powers[m_levels["rank"]][m_commands["REFab_end"]] = Lambdas::Power::Rank::REFab_end<DDR4>;
 
-      m_logger->info("Registering BG energy");
       // register stats
       register_stat(s_total_background_energy).name("total_background_energy");
       register_stat(s_total_cmd_energy).name("total_cmd_energy");
