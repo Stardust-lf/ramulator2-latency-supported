@@ -128,7 +128,7 @@ class DualDRAMController final : public IDRAMController, public Implementation {
           break;
         }
         case Request::Type::Write: {
-          s_num_write_reqs++;
+          //s_num_write_reqs++;
           break;
         }
         default: {
@@ -305,6 +305,7 @@ class DualDRAMController final : public IDRAMController, public Implementation {
           m_prev_read = true;
         }
         else if (req.type_id == Request::Type::Write){
+          s_num_write_reqs ++ ;
           s_write_latency += req.depart - req.arrive;
           m_prev_read = false;
         }
