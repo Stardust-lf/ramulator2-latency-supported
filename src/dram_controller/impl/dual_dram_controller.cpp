@@ -179,7 +179,6 @@ class DualDRAMController final : public IDRAMController, public Implementation {
 
     void tick() override {
       m_clk++;
-
       // Update statistics
       s_queue_len += m_read_buffer.size() + m_write_buffer.size() + m_priority_buffer.size() + pending.size();
       s_read_queue_len += m_read_buffer.size() + pending.size();
@@ -189,7 +188,7 @@ class DualDRAMController final : public IDRAMController, public Implementation {
       // 1. Serve completed reads
       serve_completed_requests();
 
-      m_refresh->tick();
+      //m_refresh->tick();
 
       // 2. Try to find a request to serve.
       ReqBuffer::iterator req_it;
@@ -316,7 +315,7 @@ class DualDRAMController final : public IDRAMController, public Implementation {
       }
     }
 
-    void tick_slow_pending_buffer(){
+    void tick_slow_pending_buffer(){      
       auto& slowreq = slow_pending[0];
       if (slowreq.depart <= m_clk){             
         if (slowreq.callback){

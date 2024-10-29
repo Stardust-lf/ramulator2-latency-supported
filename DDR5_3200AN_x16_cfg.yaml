@@ -35,7 +35,7 @@ MemorySystem:
       impl: OpenRowPolicy
       cap: 4
     plugins:
-    slow_chip_perf: 0.65
+    slow_chip_perf: 0.6
     
 
   AddrMapper:
