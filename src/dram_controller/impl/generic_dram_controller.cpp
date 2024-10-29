@@ -172,7 +172,7 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
       return is_success;
     }
 
-        void tick() override {
+    void tick() override {
       m_clk++;
 
       // Update statistics
@@ -205,7 +205,6 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
         if (req_it->is_stat_updated == false) {
           update_request_stats(req_it);
         }
-
         m_dram->issue_command(req_it->command, req_it->addr_vec);
         // If we are issuing the last command, set depart clock cycle and move the request to the pending queue
         if (req_it->command == req_it->final_command) {

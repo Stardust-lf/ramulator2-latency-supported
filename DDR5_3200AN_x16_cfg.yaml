@@ -3,7 +3,7 @@ Frontend:
   clock_ratio: 8
   num_expected_insts: 10000000
   traces: 
-    - ctraces/605.trace
+    - ctraces/602.trace
   llc_capacity_per_core: 1MB
   Translation:
     impl: NoTranslation
@@ -17,7 +17,7 @@ MemorySystem:
   DRAM:
     impl: DDR5
     org:
-      preset: DDR5_16Gb_x16
+      preset: DDR5_16Gb_x4
       channel: 1
       rank: 2
     timing:
@@ -35,7 +35,7 @@ MemorySystem:
       impl: OpenRowPolicy
       cap: 4
     plugins:
-    slow_chip_perf: 0.8
+    slow_chip_perf: 0.65
     
 
   AddrMapper:

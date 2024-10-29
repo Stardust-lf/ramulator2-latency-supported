@@ -15,7 +15,7 @@ trace_names = {
 
 # Convert avg_write_latency_0 to time in seconds using tCK_ps = 625 ps
 tCK_ps = 625e-12  # 625 ps in seconds
-
+print(data.keys())
 # Filter out rows with NaN in relevant columns if necessary
 data = data[data['avg_write_latency_0'] != 'NaN']
 data['avg_write_latency_0'] = pd.to_numeric(data['avg_write_latency_0'])
@@ -44,7 +44,7 @@ for trace, group in traces_without_nan.groupby('trace'):
         continue
     trace_label = trace_names.get(str(trace), trace)  # Use descriptive name or default to trace code
     ax1.plot(group['slow_chip_perf'], group['write_performance_ms'])
-    ax1.scatter(group['slow_chip_perf'], group['write_performance_ms'], s=9, label=trace_names[trace_label.split('.')[0]])
+    ax1.scatter(group['slow_chip_perf'], group['write_performance_ms'], s=9, label=trace_label)
 
 # Customize the first plot
 ax1.set_ylabel('Write Instructions per Millisecond (IMs)')
@@ -58,7 +58,7 @@ for trace, group in traces_without_nan.groupby('trace'):
         continue
     trace_label = trace_names.get(str(trace), trace)
     ax2.plot(group['slow_chip_perf'], group['total_request_rate_ms'])
-    ax2.scatter(group['slow_chip_perf'], group['total_request_rate_ms'], s=9, label=trace_names[trace_label.split('.')[0]])
+    ax2.scatter(group['slow_chip_perf'], group['total_request_rate_ms'], s=9, label=trace_label)
 
 # Customize the second plot
 ax2.set_xlabel('Slow Chip Perf')
@@ -71,4 +71,5 @@ ax2.invert_xaxis()
 
 # Adjust layout and show the plot
 plt.tight_layout()
+plt.savefig('susLatency')
 plt.show()

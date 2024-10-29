@@ -3,6 +3,7 @@ import yaml
 import subprocess
 import re
 import pandas as pd
+from tqdm import tqdm  # 导入 tqdm 库
 
 # Directory containing the configuration files
 config_dir = "../base_exp_cfgs/"
@@ -40,33 +41,39 @@ latency_results = []
 config_files = [f for f in os.listdir(config_dir) if f.endswith('.yaml')]
 
 # Loop through all the configuration files and trace files to run the simulation
-for config_file in config_files:
-    for filename in trace_files:
-        print(f'Running simulation for config {config_file} and trace {filename}')
-        trace_file = f"../ctraces/{filename}.trace"
+total_iterations = len(config_files) * len(trace_files)  # Total number of iterations for the progress bar
+with tqdm(total=total_iterations, desc="Running simulations", unit="iteration") as pbar:  # Initialize progress bar
+    for config_file in config_files:
+        for filename in trace_files:
+            # Update progress bar description
+            pbar.set_postfix({'config': config_file, 'trace': filename})
 
-        # Load the configuration file
-        config_path = os.path.join(config_dir, config_file)
-        with open(config_path, 'r') as f:
-            config = yaml.safe_load(f)
+            trace_file = f"../ctraces/{filename}.trace"
 
-        # Update the trace file in the config
-        config['Frontend']['traces'] = [trace_file]
+            # Load the configuration file
+            config_path = os.path.join(config_dir, config_file)
+            with open(config_path, 'r') as f:
+                config = yaml.safe_load(f)
 
-        # Save the updated configuration to a temporary file
-        temp_config_path = "../temp/temp_config.yaml"
-        yaml_config_str = yaml.dump(config)
-        with open(temp_config_path, 'w+') as temp_config:
-            temp_config.write(yaml_config_str)
+            # Update the trace file in the config
+            config['Frontend']['traces'] = [trace_file]
 
-        # Run the simulation and capture the output
-        result = subprocess.run(['../ramulator2', '-f', temp_config_path], capture_output=True, text=True)
+            # Save the updated configuration to a temporary file
+            temp_config_path = "../temp/temp_config.yaml"
+            yaml_config_str = yaml.dump(config)
+            with open(temp_config_path, 'w+') as temp_config:
+                temp_config.write(yaml_config_str)
 
-        # Extract relevant data
-        extracted_data = extract_info(result.stdout)
+            # Run the simulation and capture the output
+            result = subprocess.run(['../ramulator2', '-f', temp_config_path], capture_output=True, text=True)
 
-        # Append extracted data to the results list
-        latency_results.append({"config": config_file, "trace": filename, **extracted_data})
+            # Extract relevant data
+            extracted_data = extract_info(result.stdout)
+
+            # Append extracted data to the results list
+            latency_results.append({"config": config_file, "trace": filename, **extracted_data})
+
+            pbar.update(1)  # Update the progress bar
 
 # Convert the latencies to pandas DataFrame and handle NaN values
 latency_df = pd.DataFrame(latency_results).fillna('NaN')
