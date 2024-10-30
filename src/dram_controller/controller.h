@@ -26,7 +26,7 @@ class IDRAMController : public Clocked<IDRAMController> {
     IRefreshManager*   m_refresh = nullptr;
     IRowPolicy*   m_rowpolicy = nullptr;
     std::vector<IControllerPlugin*> m_plugins;
-
+    bool m_is_slow = false;
     int m_channel_id = -1;
 
   public:

@@ -731,7 +731,7 @@ class DDR5 : public IDRAM, public Implementation {
     }
 
     void create_nodes() {
-      int num_channels = m_organization.count[m_levels["channel"]];
+      int num_channels = m_organization.count[m_levels["channel"]] + 1;
       for (int i = 0; i < num_channels; i++) {
         Node* channel = new Node(this, nullptr, 0, i);
         m_channels.push_back(channel);
@@ -742,7 +742,7 @@ class DDR5 : public IDRAM, public Implementation {
       if (!m_drampower_enable)
         return;
 
-      int num_channels = m_organization.count[m_levels["channel"]];
+      int num_channels = m_organization.count[m_levels["channel"]] + 1;
       int num_ranks = m_organization.count[m_levels["rank"]];
       for (int i = 0; i < num_channels; i++) {
         for (int j = 0; j < num_ranks; j++) {

@@ -4,23 +4,23 @@
 namespace Ramulator {
 
 class DualDRAMController final : public IDRAMController, public Implementation {
-  RAMULATOR_REGISTER_IMPLEMENTATION(IDRAMController, DualDRAMController, "Dual", "DRAM controller for sustainable design.");
+  RAMULATOR_REGISTER_IMPLEMENTATION(IDRAMController, DualDRAMController, "Dual", "A generic DRAM controller.");
   private:
     std::deque<Request> pending;          // A queue for read requests that are about to finish (callback after RL)
-    std::deque<Request> slow_pending;     // Slower write-only pending buffer(for slower recyle chips)
+
     ReqBuffer m_active_buffer;            // Buffer for requests being served. This has the highest priority 
     ReqBuffer m_priority_buffer;          // Buffer for high-priority requests (e.g., maintenance like refresh).
     ReqBuffer m_read_buffer;              // Read request buffer
-    ReqBuffer m_write_buffer;             // Write request buffer      
+    ReqBuffer m_write_buffer;             // Write request buffer
 
     int m_bank_addr_idx = -1;
 
-    float m_slow_write_perf;
     float m_wr_low_watermark;
     float m_wr_high_watermark;
     bool  m_is_write_mode = false;
-    bool  m_prev_read = true;
-
+    
+    size_t write_record_start_stamp = 0;
+    size_t write_record_end_stamp = 0;
     size_t s_row_hits = 0;
     size_t s_row_misses = 0;
     size_t s_row_conflicts = 0;
@@ -30,7 +30,6 @@ class DualDRAMController final : public IDRAMController, public Implementation {
     size_t s_write_row_hits = 0;
     size_t s_write_row_misses = 0;
     size_t s_write_row_conflicts = 0;
-    size_t s_write_waiting_cycles = 0;
 
     size_t m_num_cores = 0;
     std::vector<size_t> s_read_row_hits_per_core;
@@ -50,20 +49,17 @@ class DualDRAMController final : public IDRAMController, public Implementation {
     float s_priority_queue_len_avg = 0;
 
     size_t s_read_latency = 0;
-    size_t s_write_latency = 0;
     float s_avg_read_latency = 0;
+    size_t s_write_latency = 0;
     float s_avg_write_latency = 0;
-
 
   public:
     void init() override {
       m_wr_low_watermark =  param<float>("wr_low_watermark").desc("Threshold for switching back to read mode.").default_val(0.2f);
       m_wr_high_watermark = param<float>("wr_high_watermark").desc("Threshold for switching to write mode.").default_val(0.8f);
-      m_slow_write_perf = param<float>("slow_chip_perf").desc("Performance percentage for the slower write-only chip").default_val(0.5f);
-      m_logger = Logging::create_logger("DRAM Controller");
       m_scheduler = create_child_ifce<IScheduler>();
       m_refresh = create_child_ifce<IRefreshManager>();    
-      m_rowpolicy = create_child_ifce<IRowPolicy>();    
+      m_rowpolicy = create_child_ifce<IRowPolicy>();  
 
       if (m_config["plugins"]) {
         YAML::Node plugin_configs = m_config["plugins"];
@@ -113,10 +109,9 @@ class DualDRAMController final : public IDRAMController, public Implementation {
       register_stat(s_priority_queue_len_avg).name("priority_queue_len_avg_{}", m_channel_id);
 
       register_stat(s_read_latency).name("read_latency_{}", m_channel_id);
-      register_stat(s_write_latency).name("write_latency_{}", m_channel_id);
       register_stat(s_avg_read_latency).name("avg_read_latency_{}", m_channel_id);
+      register_stat(s_write_latency).name("write_latency_{}", m_channel_id);
       register_stat(s_avg_write_latency).name("avg_write_latency_{}", m_channel_id);
-      register_stat(s_write_waiting_cycles).name("slow_chip_waiting_cycles_{}",m_channel_id);
     };
 
     bool send(Request& req) override {
@@ -128,7 +123,7 @@ class DualDRAMController final : public IDRAMController, public Implementation {
           break;
         }
         case Request::Type::Write: {
-          //s_num_write_reqs++;
+          s_num_write_reqs++;
           break;
         }
         default: {
@@ -179,6 +174,7 @@ class DualDRAMController final : public IDRAMController, public Implementation {
 
     void tick() override {
       m_clk++;
+
       // Update statistics
       s_queue_len += m_read_buffer.size() + m_write_buffer.size() + m_priority_buffer.size() + pending.size();
       s_read_queue_len += m_read_buffer.size() + pending.size();
@@ -186,9 +182,9 @@ class DualDRAMController final : public IDRAMController, public Implementation {
       s_priority_queue_len += m_priority_buffer.size();
 
       // 1. Serve completed reads
-      serve_completed_requests();
+      serve_completed_reads();
 
-      //m_refresh->tick();
+      m_refresh->tick();
 
       // 2. Try to find a request to serve.
       ReqBuffer::iterator req_it;
@@ -210,17 +206,13 @@ class DualDRAMController final : public IDRAMController, public Implementation {
           update_request_stats(req_it);
         }
         m_dram->issue_command(req_it->command, req_it->addr_vec);
-
         // If we are issuing the last command, set depart clock cycle and move the request to the pending queue
         if (req_it->command == req_it->final_command) {
           if (req_it->type_id == Request::Type::Read) {
             req_it->depart = m_clk + m_dram->m_read_latency;
             pending.push_back(*req_it);
           } else if (req_it->type_id == Request::Type::Write) {
-            req_it->depart = m_clk;
-            pending.push_back(*req_it);
-            req_it->depart = m_clk + int((m_clk - req_it->arrive) / m_slow_write_perf);
-            slow_pending.push_back(*req_it);
+            s_write_latency += m_clk - req_it->arrive;
           }
           buffer->remove(req_it);
         } else {
@@ -263,6 +255,7 @@ class DualDRAMController final : public IDRAMController, public Implementation {
     void update_request_stats(ReqBuffer::iterator& req)
     {
       req->is_stat_updated = true;
+
       if (req->type_id == Request::Type::Read) 
       {
         if (is_row_hit(req)) {
@@ -297,34 +290,6 @@ class DualDRAMController final : public IDRAMController, public Implementation {
       }
     }
 
-    void tick_pending_buffer(){
-      auto& req = pending[0];
-      if (req.depart <= m_clk){
-        if (req.type_id == Request::Type::Read) {
-          s_read_latency += req.depart - req.arrive;
-          m_prev_read = true;
-        }
-        else if (req.type_id == Request::Type::Write){
-          s_num_write_reqs ++ ;
-          s_write_latency += req.depart - req.arrive;
-          m_prev_read = false;
-        }
-        if (req.callback){
-          req.callback(req);
-        }
-        pending.pop_front();
-      }
-    }
-
-    void tick_slow_pending_buffer(){      
-      auto& slowreq = slow_pending[0];
-      if (slowreq.depart <= m_clk){             
-        if (slowreq.callback){
-            slowreq.callback(slowreq);
-          }
-          slow_pending.pop_front(); 
-        }
-    }
     /**
      * @brief    Helper function to serve the completed read requests
      * @details
@@ -332,24 +297,24 @@ class DualDRAMController final : public IDRAMController, public Implementation {
      * It checks the pending queue to see if the top request has received data from DRAM.
      * If so, it finishes this request by calling its callback and poping it from the pending queue.
      */
-    void serve_completed_requests() {
-      if (pending.size() || slow_pending.size()) {
+    void serve_completed_reads() {
+      if (pending.size()) {
         // Check the first pending request
         auto& req = pending[0];
-        auto& slowreq = slow_pending[0];
-        if (slow_pending.size() != 0){
-          if (req.type_id == Request::Type::Read || req.depart == slowreq.depart || m_prev_read == false){
-            //Update normal pending buffer
-            tick_pending_buffer();
+        if (req.depart <= m_clk) {
+          // Request received data from dram
+          if (req.depart - req.arrive > 1) {
+            // Check if this requests accesses the DRAM or is being forwarded.
+            // TODO add the stats back
+            s_read_latency += req.depart - req.arrive;
           }
-          else{
-            s_write_waiting_cycles ++ ;
+
+          if (req.callback) {
+            // If the request comes from outside (e.g., processor), call its callback
+            req.callback(req);
           }
-          //Update slow buffer
-          tick_slow_pending_buffer();
-        }
-        else{
-          tick_pending_buffer();
+          // Finally, remove this request from the pending queue
+          pending.pop_front();
         }
       };
     };
@@ -439,7 +404,6 @@ class DualDRAMController final : public IDRAMController, public Implementation {
     void finalize() override {
       s_avg_read_latency = (float) s_read_latency / (float) s_num_read_reqs;
       s_avg_write_latency = (float) s_write_latency / (float) s_num_write_reqs;
-
       s_queue_len_avg = (float) s_queue_len / (float) m_clk;
       s_read_queue_len_avg = (float) s_read_queue_len / (float) m_clk;
       s_write_queue_len_avg = (float) s_write_queue_len / (float) m_clk;

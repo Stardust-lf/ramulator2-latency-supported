@@ -48,7 +48,7 @@ class Implementation {
   template<class T> friend class TopLevel;
 
   protected:
-    const YAML::Node m_config;    // Raw YAML configurations
+    YAML::Node m_config;    // Raw YAML configurations
 
     const std::string m_ifce_name;    // Name of the interface
     const std::string m_name;         // Name of the implementation

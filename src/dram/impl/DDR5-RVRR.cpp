@@ -775,7 +775,7 @@ class DDR5RVRR : public IDRAM, public Implementation {
       m_power_debug = param<bool>("power_debug").default_val(false);
 
       // TODO: Check for multichannel configs.
-      int num_channels = m_organization.count[m_levels["channel"]];
+      int num_channels = m_organization.count[m_levels["channel"]] + 1;
       int num_ranks = m_organization.count[m_levels["rank"]];
       m_power_stats.resize(num_channels * num_ranks);
       for (int i = 0; i < num_channels; i++) {
