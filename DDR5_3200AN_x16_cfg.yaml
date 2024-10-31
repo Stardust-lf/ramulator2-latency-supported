@@ -17,7 +17,7 @@ MemorySystem:
   DRAM:
     impl: DDR5
     org:
-      preset: DDR5_16Gb_x4
+      preset: DDR5_32Gb_x16
       channel: 1
       rank: 2
     timing:

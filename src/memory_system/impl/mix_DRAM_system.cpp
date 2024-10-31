@@ -12,37 +12,45 @@ protected:
   Clk_t m_clk = 0;
   IDRAM* m_dram;
   IDRAM* m_slow_dram;
-  IAddrMapper* m_addr_mapper;
+  IAddrMapper* m_pri_mapper;
+  IAddrMapper* m_sec_mapper;
   std::vector<IDRAMController*> m_controllers;
 
 public:
   int s_num_read_requests = 0;
   int s_num_write_requests = 0;
   int s_num_other_requests = 0;
+  int s_num_wait_cycles = 0;
+  IDRAMController* primary_controller;
+  IDRAMController* secondary_controller;
 
 public:
   void init() override { 
     m_dram = create_child_ifce<IDRAM>();
+    m_pri_mapper = create_child_ifce<IAddrMapper>();
     m_config["DRAM"]["impl"] = YAML::Node("DDR4");
     m_config["DRAM"]["org"]["preset"] = YAML::Node("DDR4_16Gb_x4");
-    m_config["DRAM"]["timing"]["preset"] = YAML::Node("DDR4_2133N");
+    m_config["DRAM"]["timing"]["preset"] = YAML::Node("DDR4_1600J");
+    m_sec_mapper = create_child_ifce<IAddrMapper>();
+    // m_config["DRAM"]["org"]["channel"] = YAML::Node("2");
     std::cout << m_config << std::endl;
     m_slow_dram = create_child_ifce<IDRAM>();
-    m_addr_mapper = create_child_ifce<IAddrMapper>();
+    
     int num_channels = m_dram->get_level_size("channel");
     
 
-    IDRAMController* primary_controller = create_child_ifce<IDRAMController>();
+    primary_controller = create_child_ifce<IDRAMController>();
     primary_controller->m_impl->set_id(fmt::format("Primary Channel {}", 0));
     primary_controller->m_channel_id = 0;
-    m_controllers.push_back(primary_controller);
+
     
-    IDRAMController* secondary_controller = create_child_ifce<IDRAMController>();
-    secondary_controller->m_is_slow = true;
+    secondary_controller = create_child_ifce<IDRAMController>();
     secondary_controller->m_impl->set_id(fmt::format("Secondary Channel {}", 1));
-    secondary_controller->m_channel_id = 1; 
-    m_controllers.push_back(secondary_controller);
-    
+    secondary_controller->m_channel_id = 0; 
+
+
+    primary_controller->m_dram = m_dram;
+    secondary_controller->m_dram = m_slow_dram;
     
 
     m_clock_ratio = param<uint>("clock_ratio").required();
@@ -51,22 +59,28 @@ public:
     register_stat(s_num_read_requests).name("total_num_read_requests");
     register_stat(s_num_write_requests).name("total_num_write_requests");
     register_stat(s_num_other_requests).name("total_num_other_requests");
+    register_stat(s_num_wait_cycles).name("total_wait_cycles");
+
   };
+
+private:
+  bool m_prev_read = true;
 
   void setup(IFrontEnd* frontend, IMemorySystem* memory_system) override { }
 
   bool send(Request req) override {
-    m_controllers[0]->m_dram = m_dram;
-    m_controllers[1]->m_dram = m_slow_dram;
-    m_addr_mapper->apply(req);
     Request req_cp = req;
-    req.addr_vec[0] = 0;
-    req_cp.addr_vec[0] = 1;
-    bool is_success = m_controllers[0]->send(req);
-    bool is_success_sec = m_controllers[1]->send(req_cp);
+    m_pri_mapper->apply(req);
+    m_sec_mapper->apply(req_cp);
+    // req.addr_vec[0] = 0;
+    // req_cp.addr_vec[0] = 0;
+    bool is_success = primary_controller->send(req);
+    bool is_success_sec = true;
+    if(req.type_id == Request::Type::Write){
+      is_success_sec = secondary_controller->send(req_cp);
+    }
 
-
-    if (is_success) {
+    if (is_success && is_success_sec) {
       switch (req.type_id) {
         case Request::Type::Read: {
           s_num_read_requests++;
@@ -83,17 +97,31 @@ public:
       }
     }
 
-    return is_success;
+    return is_success && is_success_sec;
   };
 
   void tick() override {
     m_clk++;
     m_dram->tick();
-    m_slow_dram->tick();
-    for (auto controller : m_controllers) {
-      controller->tick();
+    int speed_times = 2;
+    if(m_clk % speed_times == 0){
+      m_slow_dram->tick();
     }
-
+    if(secondary_controller->m_write_buffer.size()){
+      if(!m_prev_read || primary_controller->m_curr_cmd->type_id == Request::Type::Read || 
+      primary_controller->m_curr_cmd->addr == secondary_controller->m_curr_cmd->addr){
+        primary_controller->tick();
+        m_prev_read = primary_controller->m_curr_cmd->type_id == Request::Type::Read;
+        secondary_controller->tick();
+       }else{
+        s_num_wait_cycles ++;
+        secondary_controller->tick();
+       }
+      }else{
+        primary_controller->tick();
+        secondary_controller->tick();
+      }
+    
   };
 
   float get_tCK() override {

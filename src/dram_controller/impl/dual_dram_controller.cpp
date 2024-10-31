@@ -10,15 +10,13 @@ class DualDRAMController final : public IDRAMController, public Implementation {
 
     ReqBuffer m_active_buffer;            // Buffer for requests being served. This has the highest priority 
     ReqBuffer m_priority_buffer;          // Buffer for high-priority requests (e.g., maintenance like refresh).
-    ReqBuffer m_read_buffer;              // Read request buffer
-    ReqBuffer m_write_buffer;             // Write request buffer
 
     int m_bank_addr_idx = -1;
 
     float m_wr_low_watermark;
     float m_wr_high_watermark;
     bool  m_is_write_mode = false;
-    
+    bool  m_write_lock = false;
     size_t write_record_start_stamp = 0;
     size_t write_record_end_stamp = 0;
     size_t s_row_hits = 0;
@@ -70,7 +68,7 @@ class DualDRAMController final : public IDRAMController, public Implementation {
     };
 
     void setup(IFrontEnd* frontend, IMemorySystem* memory_system) override {
-      m_dram = memory_system->get_ifce<IDRAM>();
+      //m_dram = memory_system->get_ifce<IDRAM>();
       m_bank_addr_idx = m_dram->m_levels("bank");
       m_priority_buffer.max_size = 512*3 + 32;
 
@@ -172,6 +170,10 @@ class DualDRAMController final : public IDRAMController, public Implementation {
       return is_success;
     }
 
+    void empty_tick(){
+      m_clk ++;
+    }
+
     void tick() override {
       m_clk++;
 
@@ -190,7 +192,6 @@ class DualDRAMController final : public IDRAMController, public Implementation {
       ReqBuffer::iterator req_it;
       ReqBuffer* buffer = nullptr;
       bool request_found = schedule_request(req_it, buffer);
-
       // 2.1 Take row policy action
       m_rowpolicy->update(request_found, req_it);
 
@@ -205,6 +206,7 @@ class DualDRAMController final : public IDRAMController, public Implementation {
         if (req_it->is_stat_updated == false) {
           update_request_stats(req_it);
         }
+        m_curr_cmd = req_it;
         m_dram->issue_command(req_it->command, req_it->addr_vec);
         // If we are issuing the last command, set depart clock cycle and move the request to the pending queue
         if (req_it->command == req_it->final_command) {
@@ -225,7 +227,6 @@ class DualDRAMController final : public IDRAMController, public Implementation {
       }
 
     };
-
 
   private:
     /**
