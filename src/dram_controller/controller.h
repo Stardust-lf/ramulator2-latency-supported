@@ -30,6 +30,9 @@ class IDRAMController : public Clocked<IDRAMController> {
     int m_channel_id = -1;
     ReqBuffer m_read_buffer;              // Read request buffer
     ReqBuffer m_write_buffer;             // Write request buffer
+    std::deque<Request> pending;          // A queue for read requests that are about to finish (callback after RL)
+    bool is_warming = true;
+    bool m_is_write_mode = false;
 
   public:
     /**
@@ -52,6 +55,10 @@ class IDRAMController : public Clocked<IDRAMController> {
      * 
      */
     virtual void tick() = 0;
+
+    virtual void empty_tick(){
+      m_clk ++;
+    };
    
 };
 

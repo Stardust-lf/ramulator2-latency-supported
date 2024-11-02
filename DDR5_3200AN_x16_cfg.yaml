@@ -1,9 +1,8 @@
 Frontend:
-  impl: SimpleO3
+  impl: LoadStoreTrace
   clock_ratio: 8
-  num_expected_insts: 1000000
-  traces: 
-    - ctraces/654.trace
+  num_expected_insts: 10000000
+  path: full_traces/example.trace
   llc_capacity_per_core: 1MB
   Translation:
     impl: NoTranslation

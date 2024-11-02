@@ -28,9 +28,13 @@ public:
   void init() override { 
     m_dram = create_child_ifce<IDRAM>();
     m_pri_mapper = create_child_ifce<IAddrMapper>();
-    m_config["DRAM"]["impl"] = YAML::Node("DDR4");
-    m_config["DRAM"]["org"]["preset"] = YAML::Node("DDR4_16Gb_x4");
-    m_config["DRAM"]["timing"]["preset"] = YAML::Node("DDR4_1600J");
+    // m_config["DRAM"]["impl"] = YAML::Node("DDR4");
+    // m_config["DRAM"]["org"]["preset"] = YAML::Node("DDR4_16Gb_x4");
+    // m_config["DRAM"]["timing"]["preset"] = YAML::Node("DDR4_1600J");
+    m_config["DRAM"]["impl"] = YAML::Node("DDR5");
+    m_config["DRAM"]["org"]["preset"] = YAML::Node("DDR5_32Gb_x16");
+    m_config["DRAM"]["timing"]["preset"] = YAML::Node("DDR5_3200C");
+    
     m_sec_mapper = create_child_ifce<IAddrMapper>();
     // m_config["DRAM"]["org"]["channel"] = YAML::Node("2");
     std::cout << m_config << std::endl;
@@ -97,24 +101,31 @@ private:
       }
     }
 
-    return is_success && is_success_sec;
+    return is_success;
   };
 
   void tick() override {
     m_clk++;
     m_dram->tick();
-    int speed_times = 2;
-    if(m_clk % speed_times == 0){
-      m_slow_dram->tick();
-    }
-    if(secondary_controller->m_write_buffer.size()){
+    // int speed_times = 2;
+    // if(m_clk % speed_times == 0){
+    //   m_slow_dram->tick();
+    // }
+    m_slow_dram->tick();
+    if(secondary_controller->m_is_write_mode){
+      if(primary_controller->is_warming||secondary_controller->is_warming){
+        primary_controller->tick();
+        secondary_controller->tick();
+        return;
+      }
       if(!m_prev_read || primary_controller->m_curr_cmd->type_id == Request::Type::Read || 
-      primary_controller->m_curr_cmd->addr == secondary_controller->m_curr_cmd->addr){
+        primary_controller->m_curr_cmd->arrive == secondary_controller->m_curr_cmd->arrive){
         primary_controller->tick();
         m_prev_read = primary_controller->m_curr_cmd->type_id == Request::Type::Read;
         secondary_controller->tick();
        }else{
         s_num_wait_cycles ++;
+        primary_controller->empty_tick();
         secondary_controller->tick();
        }
       }else{
@@ -123,6 +134,15 @@ private:
       }
     
   };
+
+  bool is_finished() override{
+
+    return bool(primary_controller->m_write_buffer.size() 
+    + primary_controller->m_read_buffer.size() 
+    + primary_controller->pending.size()
+    + secondary_controller->pending.size()
+    + secondary_controller->m_write_buffer.size());
+  }
 
   float get_tCK() override {
     return m_dram->m_timing_vals("tCK_ps") / 1000.0f;

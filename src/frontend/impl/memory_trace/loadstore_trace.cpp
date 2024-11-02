@@ -14,11 +14,12 @@ class LoadStoreTrace : public IFrontEnd, public Implementation {
 
   private:
     struct Trace {
-      bool is_write;
+      int bubble_count;
       Addr_t addr;
+      bool is_write;
     };
     std::vector<Trace> m_trace;
-
+    size_t test_insts = 1000000;
     size_t m_trace_length = 0;
     size_t m_curr_trace_idx = 0;
 
@@ -39,12 +40,19 @@ class LoadStoreTrace : public IFrontEnd, public Implementation {
 
 
     void tick() override {
-      const Trace& t = m_trace[m_curr_trace_idx];
+      if(m_trace_count >= test_insts){
+        return;
+      }
+      Trace& t = m_trace[m_curr_trace_idx];
+      while(t.bubble_count >= 0){
+        t.bubble_count --;
+        return;
+      }
       bool request_sent = m_memory_system->send({t.addr, t.is_write ? Request::Type::Write : Request::Type::Read});
       if (request_sent) {
         m_curr_trace_idx = (m_curr_trace_idx + 1) % m_trace_length;
         m_trace_count++;
-      }
+      }    
     };
 
 
@@ -61,32 +69,24 @@ class LoadStoreTrace : public IFrontEnd, public Implementation {
       }
 
       std::string line;
-      while (std::getline(trace_file, line)) {
+      size_t num_line_insts = 0;
+      while (std::getline(trace_file, line) && num_line_insts<test_insts) {
         std::vector<std::string> tokens;
         tokenize(tokens, line, " ");
 
-        // TODO: Add line number here for better error messages
-        if (tokens.size() != 2) {
+        int num_tokens = tokens.size();
+        if (num_tokens != 2 & num_tokens != 3) {
           throw ConfigurationError("Trace {} format invalid!", file_path_str);
         }
+        int bubble_count = std::stoi(tokens[0]);
+        bool is_write = tokens[1] == "W";
+        Addr_t addr = std::stoll(tokens[2]);
 
-        bool is_write = false; 
-        if (tokens[0] == "LD") {
-          is_write = false;
-        } else if (tokens[0] == "ST") {
-          is_write = true;
-        } else {
-          throw ConfigurationError("Trace {} format invalid!", file_path_str);
-        }
 
-        Addr_t addr = -1;
-        if (tokens[1].compare(0, 2, "0x") == 0 | tokens[1].compare(0, 2, "0X") == 0) {
-          addr = std::stoll(tokens[1].substr(2), nullptr, 16);
-        } else {
-          addr = std::stoll(tokens[1]);
-        }
-        m_trace.push_back({is_write, addr});
-      }
+        m_trace.push_back({bubble_count, addr, is_write});
+
+    num_line_insts++;
+  }
 
       trace_file.close();
 
@@ -95,7 +95,11 @@ class LoadStoreTrace : public IFrontEnd, public Implementation {
 
     // TODO: FIXME
     bool is_finished() override {
-      return m_trace_count >= m_trace_length; 
+      bool finish = false;
+      if(m_trace_count >= test_insts && m_memory_system->is_finished()){
+        finish = true;
+      }
+      return finish;
     };
 };
 

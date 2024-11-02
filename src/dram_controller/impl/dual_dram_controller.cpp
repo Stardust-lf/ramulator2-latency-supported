@@ -6,7 +6,7 @@ namespace Ramulator {
 class DualDRAMController final : public IDRAMController, public Implementation {
   RAMULATOR_REGISTER_IMPLEMENTATION(IDRAMController, DualDRAMController, "Dual", "A generic DRAM controller.");
   private:
-    std::deque<Request> pending;          // A queue for read requests that are about to finish (callback after RL)
+    
 
     ReqBuffer m_active_buffer;            // Buffer for requests being served. This has the highest priority 
     ReqBuffer m_priority_buffer;          // Buffer for high-priority requests (e.g., maintenance like refresh).
@@ -15,7 +15,6 @@ class DualDRAMController final : public IDRAMController, public Implementation {
 
     float m_wr_low_watermark;
     float m_wr_high_watermark;
-    bool  m_is_write_mode = false;
     bool  m_write_lock = false;
     size_t write_record_start_stamp = 0;
     size_t write_record_end_stamp = 0;
@@ -170,8 +169,9 @@ class DualDRAMController final : public IDRAMController, public Implementation {
       return is_success;
     }
 
-    void empty_tick(){
+    void empty_tick() override{
       m_clk ++;
+      m_refresh->tick();
     }
 
     void tick() override {
@@ -202,6 +202,7 @@ class DualDRAMController final : public IDRAMController, public Implementation {
 
       // 4. Finally, issue the commands to serve the request
       if (request_found) {
+        is_warming = false;
         // If we find a real request to serve
         if (req_it->is_stat_updated == false) {
           update_request_stats(req_it);
@@ -224,6 +225,8 @@ class DualDRAMController final : public IDRAMController, public Implementation {
           }
         }
 
+      }else{
+        is_warming = true;
       }
 
     };
