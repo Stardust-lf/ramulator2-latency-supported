@@ -78,13 +78,18 @@ private:
     m_sec_mapper->apply(req_cp);
     // req.addr_vec[0] = 0;
     // req_cp.addr_vec[0] = 0;
-    bool is_success = primary_controller->send(req);
-    bool is_success_sec = true;
     if(req.type_id == Request::Type::Write){
-      is_success_sec = secondary_controller->send(req_cp);
+      if(primary_controller->m_write_buffer.size() == 32 || secondary_controller->m_write_buffer.size() == 32){
+        return false;
+      }
+    }
+    bool is_success = primary_controller->send(req);
+    
+    if(is_success && req.type_id == Request::Type::Write){
+      secondary_controller->send(req_cp);
     }
 
-    if (is_success && is_success_sec) {
+    if (is_success) {
       switch (req.type_id) {
         case Request::Type::Read: {
           s_num_read_requests++;
@@ -112,26 +117,44 @@ private:
     //   m_slow_dram->tick();
     // }
     m_slow_dram->tick();
+    ReqBuffer::iterator pri_req_it;
+    ReqBuffer* pri_buffer = nullptr;
+    ReqBuffer::iterator sec_req_it;
+    ReqBuffer* sec_buffer = nullptr;
+    bool request_found_pri = primary_controller->schedule_request(pri_req_it, pri_buffer);
+    bool request_found_sec = secondary_controller->schedule_request(sec_req_it, sec_buffer);
+
     if(secondary_controller->m_is_write_mode){
-      if(primary_controller->is_warming||secondary_controller->is_warming){
+      if(request_found_pri && pri_req_it->type_id == Request::Type::Read){
         primary_controller->tick();
-        secondary_controller->tick();
+        m_prev_read = pri_req_it->type_id == Request::Type::Read;
+      }else if(!request_found_pri){
+        primary_controller->tick();
         return;
+      }else if(request_found_pri && request_found_sec){
+        if(pri_req_it->addr == -1){
+          primary_controller->tick();
+        }else if(pri_req_it->arrive == sec_req_it->arrive){
+          primary_controller->tick();
+          m_prev_read = pri_req_it->type_id == Request::Type::Read;
+        }else{
+          primary_controller->empty_tick();
+          s_num_wait_cycles ++ ;
+        }
+      }else if(request_found_pri && !request_found_sec){
+        if(m_prev_read){
+          primary_controller->empty_tick();
+          s_num_wait_cycles ++ ;
+        }else{
+          primary_controller->tick();
+          m_prev_read = pri_req_it->type_id == Request::Type::Read;
+        }
       }
-      if(!m_prev_read || primary_controller->m_curr_cmd->type_id == Request::Type::Read || 
-        primary_controller->m_curr_cmd->arrive == secondary_controller->m_curr_cmd->arrive){
-        primary_controller->tick();
-        m_prev_read = primary_controller->m_curr_cmd->type_id == Request::Type::Read;
-        secondary_controller->tick();
-       }else{
-        s_num_wait_cycles ++;
-        primary_controller->empty_tick();
-        secondary_controller->tick();
-       }
       }else{
         primary_controller->tick();
-        secondary_controller->tick();
+        m_prev_read = pri_req_it->type_id == Request::Type::Read;
       }
+      secondary_controller->tick();
     
   };
 

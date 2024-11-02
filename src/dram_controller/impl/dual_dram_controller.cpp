@@ -107,7 +107,7 @@ class DualDRAMController final : public IDRAMController, public Implementation {
 
       register_stat(s_read_latency).name("read_latency_{}", m_channel_id);
       register_stat(s_avg_read_latency).name("avg_read_latency_{}", m_channel_id);
-      register_stat(s_write_latency).name("write_latency_{}", m_channel_id);
+      register_stat(s_write_latency).name("write_depart_latency_{}", m_channel_id);
       register_stat(s_avg_write_latency).name("avg_write_latency_{}", m_channel_id);
     };
 
@@ -172,6 +172,7 @@ class DualDRAMController final : public IDRAMController, public Implementation {
     void empty_tick() override{
       m_clk ++;
       m_refresh->tick();
+      set_write_mode();
     }
 
     void tick() override {
@@ -207,7 +208,6 @@ class DualDRAMController final : public IDRAMController, public Implementation {
         if (req_it->is_stat_updated == false) {
           update_request_stats(req_it);
         }
-        m_curr_cmd = req_it;
         m_dram->issue_command(req_it->command, req_it->addr_vec);
         // If we are issuing the last command, set depart clock cycle and move the request to the pending queue
         if (req_it->command == req_it->final_command) {
@@ -345,7 +345,7 @@ class DualDRAMController final : public IDRAMController, public Implementation {
      * @brief    Helper function to find a request to schedule from the buffers.
      * 
      */
-    bool schedule_request(ReqBuffer::iterator& req_it, ReqBuffer*& req_buffer) {
+    bool schedule_request (ReqBuffer::iterator& req_it, ReqBuffer*& req_buffer) override{
       bool request_found = false;
       // 2.1    First, check the act buffer to serve requests that are already activating (avoid useless ACTs)
       if (req_it= m_scheduler->get_best_request(m_active_buffer); req_it != m_active_buffer.end()) {

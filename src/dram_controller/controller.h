@@ -59,6 +59,10 @@ class IDRAMController : public Clocked<IDRAMController> {
     virtual void empty_tick(){
       m_clk ++;
     };
+
+    virtual bool schedule_request(ReqBuffer::iterator& req_it, ReqBuffer*& req_buffer){
+      return false;
+    }
    
 };
 

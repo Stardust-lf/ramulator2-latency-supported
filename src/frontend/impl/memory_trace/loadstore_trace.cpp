@@ -80,7 +80,7 @@ class LoadStoreTrace : public IFrontEnd, public Implementation {
         }
         int bubble_count = std::stoi(tokens[0]);
         bool is_write = tokens[1] == "W";
-        Addr_t addr = std::stoll(tokens[2]);
+        Addr_t addr = std::stoll(tokens[2], nullptr, 16);
 
 
         m_trace.push_back({bubble_count, addr, is_write});
