@@ -33,6 +33,9 @@ class IDRAMController : public Clocked<IDRAMController> {
     std::deque<Request> pending;          // A queue for read requests that are about to finish (callback after RL)
     bool is_warming = true;
     bool m_is_write_mode = false;
+    bool m_is_spc_dram = false;
+    ReqBuffer m_active_buffer;            // Buffer for requests being served. This has the highest priority 
+    ReqBuffer m_priority_buffer;          // Buffer for high-priority requests (e.g., maintenance like refresh).
 
   public:
     /**

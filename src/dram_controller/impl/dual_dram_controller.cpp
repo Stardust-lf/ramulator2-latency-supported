@@ -8,9 +8,7 @@ class DualDRAMController final : public IDRAMController, public Implementation {
   private:
     
 
-    ReqBuffer m_active_buffer;            // Buffer for requests being served. This has the highest priority 
-    ReqBuffer m_priority_buffer;          // Buffer for high-priority requests (e.g., maintenance like refresh).
-
+    
     int m_bank_addr_idx = -1;
 
     float m_wr_low_watermark;
@@ -329,6 +327,18 @@ class DualDRAMController final : public IDRAMController, public Implementation {
      * 
      */
     void set_write_mode() {
+      if (m_is_spc_dram){
+        if (!m_is_write_mode) {
+          if ((m_write_buffer.size() > m_wr_high_watermark * m_write_buffer.max_size)) {
+            m_is_write_mode = true;
+          }
+        } else {
+          if ((m_write_buffer.size() < m_wr_low_watermark * m_write_buffer.max_size)) {
+            m_is_write_mode = false;
+          }
+        }
+        return;
+      }
       if (!m_is_write_mode) {
         if ((m_write_buffer.size() > m_wr_high_watermark * m_write_buffer.max_size) || m_read_buffer.size() == 0) {
           m_is_write_mode = true;

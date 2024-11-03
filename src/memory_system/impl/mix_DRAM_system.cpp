@@ -15,7 +15,8 @@ protected:
   IAddrMapper* m_pri_mapper;
   IAddrMapper* m_sec_mapper;
   std::vector<IDRAMController*> m_controllers;
-
+  std::string m_slow_timing;
+  std::string m_slow_impl;
 public:
   int s_num_read_requests = 0;
   int s_num_write_requests = 0;
@@ -26,18 +27,17 @@ public:
 
 public:
   void init() override { 
+    m_clock_ratio = param<uint>("clock_ratio").required();
+    m_slow_impl = param<std::string>("slow_impl").required();
+    m_slow_timing = param<std::string>("slow_timing").required();
+    
+
     m_dram = create_child_ifce<IDRAM>();
     m_pri_mapper = create_child_ifce<IAddrMapper>();
-    // m_config["DRAM"]["impl"] = YAML::Node("DDR4");
-    // m_config["DRAM"]["org"]["preset"] = YAML::Node("DDR4_16Gb_x4");
-    // m_config["DRAM"]["timing"]["preset"] = YAML::Node("DDR4_1600J");
-    m_config["DRAM"]["impl"] = YAML::Node("DDR5");
-    m_config["DRAM"]["org"]["preset"] = YAML::Node("DDR5_32Gb_x16");
-    m_config["DRAM"]["timing"]["preset"] = YAML::Node("DDR5_3200C");
+    m_config["DRAM"]["impl"] = YAML::Node(m_slow_impl);
+    m_config["DRAM"]["timing"]["preset"] = YAML::Node(m_slow_timing);
     
     m_sec_mapper = create_child_ifce<IAddrMapper>();
-    // m_config["DRAM"]["org"]["channel"] = YAML::Node("2");
-    std::cout << m_config << std::endl;
     m_slow_dram = create_child_ifce<IDRAM>();
     
     int num_channels = m_dram->get_level_size("channel");
@@ -51,13 +51,13 @@ public:
     secondary_controller = create_child_ifce<IDRAMController>();
     secondary_controller->m_impl->set_id(fmt::format("Secondary Channel {}", 1));
     secondary_controller->m_channel_id = 0; 
-
+    secondary_controller->m_is_spc_dram = true;
 
     primary_controller->m_dram = m_dram;
     secondary_controller->m_dram = m_slow_dram;
     
 
-    m_clock_ratio = param<uint>("clock_ratio").required();
+    
 
     register_stat(m_clk).name("memory_system_cycles");
     register_stat(s_num_read_requests).name("total_num_read_requests");
@@ -109,6 +109,7 @@ private:
     return is_success;
   };
 
+  
   void tick() override {
     m_clk++;
     m_dram->tick();
@@ -121,40 +122,25 @@ private:
     ReqBuffer* pri_buffer = nullptr;
     ReqBuffer::iterator sec_req_it;
     ReqBuffer* sec_buffer = nullptr;
+    
     bool request_found_pri = primary_controller->schedule_request(pri_req_it, pri_buffer);
+    if(primary_controller->m_is_write_mode && request_found_pri){
+      secondary_controller->m_is_write_mode = true;
+    }
     bool request_found_sec = secondary_controller->schedule_request(sec_req_it, sec_buffer);
-
     if(secondary_controller->m_is_write_mode){
-      if(request_found_pri && pri_req_it->type_id == Request::Type::Read){
-        primary_controller->tick();
-        m_prev_read = pri_req_it->type_id == Request::Type::Read;
-      }else if(!request_found_pri){
-        primary_controller->tick();
-        return;
-      }else if(request_found_pri && request_found_sec){
-        if(pri_req_it->addr == -1){
-          primary_controller->tick();
-        }else if(pri_req_it->arrive == sec_req_it->arrive){
-          primary_controller->tick();
-          m_prev_read = pri_req_it->type_id == Request::Type::Read;
-        }else{
-          primary_controller->empty_tick();
-          s_num_wait_cycles ++ ;
-        }
-      }else if(request_found_pri && !request_found_sec){
-        if(m_prev_read){
-          primary_controller->empty_tick();
-          s_num_wait_cycles ++ ;
-        }else{
-          primary_controller->tick();
-          m_prev_read = pri_req_it->type_id == Request::Type::Read;
-        }
-      }
+      if(request_found_pri && !request_found_sec && m_prev_read){
+        primary_controller->empty_tick();
+        s_num_wait_cycles ++;
       }else{
         primary_controller->tick();
         m_prev_read = pri_req_it->type_id == Request::Type::Read;
       }
-      secondary_controller->tick();
+    }else{
+      primary_controller->tick();
+      m_prev_read = pri_req_it->type_id == Request::Type::Read;
+    }
+    secondary_controller->tick();
     
   };
 

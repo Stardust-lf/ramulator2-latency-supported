@@ -12,6 +12,8 @@ Frontend:
 MemorySystem:
   impl: DualChannelDRAM
   clock_ratio: 3
+  slow_timing: DDR5_3200Te
+  slow_impl: DDR5
 
   DRAM:
     impl: DDR5
