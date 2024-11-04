@@ -19,7 +19,7 @@ class LoadStoreTrace : public IFrontEnd, public Implementation {
       bool is_write;
     };
     std::vector<Trace> m_trace;
-    size_t test_insts = 100000;
+    size_t test_insts = 1000000;
     size_t m_trace_length = 0;
     size_t m_curr_trace_idx = 0;
 
@@ -52,6 +52,9 @@ class LoadStoreTrace : public IFrontEnd, public Implementation {
       if (request_sent) {
         m_curr_trace_idx = (m_curr_trace_idx + 1) % m_trace_length;
         m_trace_count++;
+        if (m_trace_count % 200000 == 0){
+          m_logger->info("Running on instance count {}", m_trace_count);
+        }
       }    
     };
 
@@ -78,9 +81,9 @@ class LoadStoreTrace : public IFrontEnd, public Implementation {
         if (num_tokens != 2 & num_tokens != 3) {
           throw ConfigurationError("Trace {} format invalid!", file_path_str);
         }
-        int bubble_count = std::stoi(tokens[0]);
+        int bubble_count = std::min(std::stoi(tokens[0]),16);
         bool is_write = tokens[1] == "W";
-        Addr_t addr = std::stoll(tokens[2], nullptr, 16);
+        Addr_t addr = std::stoll(tokens[2]);
 
 
         m_trace.push_back({bubble_count, addr, is_write});
