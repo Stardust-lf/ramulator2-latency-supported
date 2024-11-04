@@ -21,7 +21,7 @@ MemorySystem:
       channel: 1
       rank: 2
     timing:
-      preset: DDR5_3200AN
+      preset: DDR5_6400AN
     RFM:
       BRC: 2
 

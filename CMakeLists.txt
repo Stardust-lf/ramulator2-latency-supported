@@ -8,7 +8,7 @@ project(
 
 #### Prompt the build type ####
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "" FORCE)
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "" FORCE)
 endif()
 message("Configuring ${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_Version}...")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
