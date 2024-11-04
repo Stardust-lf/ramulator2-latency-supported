@@ -33,9 +33,9 @@ class LoadStoreTrace : public IFrontEnd, public Implementation {
       m_clock_ratio = param<uint>("clock_ratio").required();
 
       m_logger = Logging::create_logger("LoadStoreTrace");
-      m_logger->info("Loading trace file {} ...", trace_path_str);
+      // m_logger->info("Loading trace file {} ...", trace_path_str);
       init_trace(trace_path_str);
-      m_logger->info("Loaded {} lines.", m_trace.size());
+      // m_logger->info("Loaded {} lines.", m_trace.size());
     };
 
 

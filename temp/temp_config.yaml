@@ -3,11 +3,9 @@ Frontend:
     impl: NoTranslation
     max_addr: 2147483648
   clock_ratio: 8
-  impl: SimpleO3
-  llc_capacity_per_core: 1MB
-  num_expected_insts: 10000000
-  traces:
-  - ../ctraces/619.trace
+  impl: LoadStoreTrace
+  num_expected_insts: 1000000
+  path: ../final_traces/619.trace
 MemorySystem:
   AddrMapper:
     impl: RoBaRaCoCh
@@ -21,16 +19,17 @@ MemorySystem:
       impl: FRFCFS
     impl: Dual
     plugins: null
-    slow_chip_perf: 1.0
   DRAM:
     RFM:
       BRC: 2
     impl: DDR5
     org:
       channel: 1
-      preset: DDR5_16Gb_x4
+      preset: DDR5_8Gb_x4
       rank: 2
     timing:
-      preset: DDR5_3200AN
+      preset: DDR5_6400AN
   clock_ratio: 3
-  impl: GenericDRAM
+  impl: DualChannelDRAM
+  slow_impl: DDR5
+  slow_timing: DDR5_6400AN

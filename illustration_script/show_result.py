@@ -19,7 +19,7 @@ print(data.keys())
 # Filter out rows with NaN in relevant columns if necessary
 data = data[data['avg_write_latency_0'] != 'NaN']
 data['avg_write_latency_0'] = pd.to_numeric(data['avg_write_latency_0'])
-data['cycles_recorded_core_0'] = pd.to_numeric(data['cycles_recorded_core_0'], errors='coerce')
+data['cycles_recorded_core_0'] = pd.to_numeric(data['memory_system_cycles'], errors='coerce')
 data['total_num_write_requests'] = pd.to_numeric(data['total_num_write_requests'], errors='coerce')
 data['total_num_read_requests'] = pd.to_numeric(data['total_num_read_requests'], errors='coerce')
 

@@ -5,10 +5,20 @@ import pandas as pd
 import re
 
 # Path to the configuration file, trace directory, and output CSV
-config_path = "../sus_exp_cfgs/DDR5_3200AN_x4_cfg.yaml"
-trace_dir = "../ctraces/"
+config_path = "../sus_perf_test.yaml"
+trace_dir = "../final_traces/"
 output_csv = 'sus_perf_results.csv'
-slow_chip_perf_values = [round(0.5 + i * 0.05, 2) for i in range(11)]  # 0.5 to 1.0 with step size of 0.05
+slow_chip_timings = [
+                    "DDR5_3200AN",
+                    "DDR5_3600AN",
+                    "DDR5_4000AN",
+                    "DDR5_4400AN",
+                    "DDR5_4800AN",
+                    "DDR5_5200AN",
+                    "DDR5_5600AN",
+                    "DDR5_6000AN",
+                    "DDR5_6400AN",
+                    ]
 
 def extract_info(output):
     """
@@ -39,33 +49,32 @@ trace_files = [f for f in os.listdir(trace_dir) if f.endswith('.trace')]
 # Iterate over each trace file and each slow_chip_perf value
 for trace_filename in trace_files:
     trace_path = os.path.join(trace_dir, trace_filename)
-    config['Frontend']['traces'] = [trace_path]  # Set the current trace file
+    config['Frontend']['path'] = trace_path  # Set the current trace file
 
-    for slow_chip_perf in slow_chip_perf_values:
-        print(f"Running simulation with trace {trace_filename} and slow_chip_perf = {slow_chip_perf}")
+    for timing in slow_chip_timings:
+        print(f"Running simulation with trace {trace_filename} and slow_chip_perf = {timing}")
 
         # Update slow_chip_perf for this iteration
-        config['MemorySystem']['Controller']['slow_chip_perf'] = slow_chip_perf
+        config['MemorySystem']["slow_timing"] = timing
 
         # Save the updated configuration to a temporary file
         temp_config_path = "../temp/temp_config.yaml"
         with open(temp_config_path, 'w') as temp_config:
             yaml.dump(config, temp_config)
 
-        try:
-            # Run the simulation and capture the output with a timeout
-            result = subprocess.run(['../ramulator2', '-f', temp_config_path], capture_output=True, text=True, timeout=10)
+        # Run the simulation and capture the output with a timeout
+        result = subprocess.run(['../ramulator2', '-f', temp_config_path], capture_output=True, text=True)
+        #print(result.stdout)
+        # Extract performance data
+        extracted_data = extract_info(result.stdout)
+        extracted_data['trace'] = trace_filename.split('.')[0]
+        extracted_data['slow_timing'] = timing
 
-            # Extract performance data
-            extracted_data = extract_info(result.stdout)
-            extracted_data['trace'] = trace_filename.split('.')[0]
-            extracted_data['slow_chip_perf'] = slow_chip_perf
+        # Append extracted data to results list
+        results.append(extracted_data)
 
-            # Append extracted data to results list
-            results.append(extracted_data)
-
-        except subprocess.TimeoutExpired:
-            print(f"Simulation for {trace_filename} and slow_chip_perf = {slow_chip_perf} timed out. Skipping this iteration.")
+        # except subprocess.TimeoutExpired:
+        #     print(f"Simulation for {trace_filename} and slow_chip_perf = {timing} timed out. Skipping this iteration.")
 
 # Convert the results to a pandas DataFrame and handle any NaN values
 df = pd.DataFrame(results).fillna('NaN')

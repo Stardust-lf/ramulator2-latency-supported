@@ -45,7 +45,7 @@ with tqdm(total=total_iterations, desc="Running simulations", unit="iteration") 
             # Update progress bar description
             pbar.set_postfix({'config': config_file, 'trace': filename})
 
-            trace_file = f"../ctraces/{filename}.trace"
+            trace_file = f"../final_traces/{filename}.trace"
 
             # Load the configuration file
             config_path = os.path.join(config_dir, config_file)
