@@ -21,6 +21,8 @@ class DDR5 : public IDRAM, public Implementation {
       {"DDR5_32Gb_x4",  {32<<10,  4,  {1, 1, 8, 4, 1<<17, 1<<11}}},
       {"DDR5_32Gb_x8",  {32<<10,  8,  {1, 1, 8, 4, 1<<17, 1<<10}}},
       {"DDR5_32Gb_x16", {32<<10,  16, {1, 1, 4, 4, 1<<17, 1<<10}}},
+      {"DDR5_baseline", {(8<<9) * 4,   4,  {1, 2, 4, 8, 1<<16, 1<<10}}},
+      {"DDR5_design",   {(8<<9) * 3,   4,  {1, 1, 6, 8, 1<<16, 1<<10}}},
       // {"DDR5_64Gb_x4",  {64<<10,  4,  {1, 1, 8, 4, 1<<18, 1<<11}}},
       // {"DDR5_64Gb_x8",  {64<<10,  8,  {1, 1, 8, 4, 1<<18, 1<<10}}},
       // {"DDR5_64Gb_x16", {64<<10,  16, {1, 1, 4, 4, 1<<18, 1<<10}}},
@@ -537,6 +539,7 @@ class DDR5 : public IDRAM, public Implementation {
           case 8192:  return 0;
           case 16384: return 1;
           case 32768: return 2;
+          case 12288: return 1;
           default:    return -1;
         }
       }(m_organization.density);

@@ -1,0 +1,41 @@
+Frontend:
+  impl: LoadStoreTrace
+  clock_ratio: 8
+  num_expected_insts: 1000000
+  path: final_traces/602.trace
+  Translation:
+    impl: NoTranslation
+    max_addr: 2147483648
+              
+
+MemorySystem:
+  impl: DualChannelDRAM
+  clock_ratio: 3
+  slow_timing: DDR5_6400AN
+  slow_impl: DDR5
+
+  DRAM:
+    impl: DDR5
+    org:
+      preset: DDR5_design
+      channel: 1
+      rank: 1
+    timing:
+      preset: DDR5_6400AN
+    RFM:
+      BRC: 2
+
+  Controller:
+    impl: Dual
+    Scheduler:
+      impl: FRFCFS
+    RefreshManager:
+      impl: AllBank
+    RowPolicy:
+      impl: OpenRowPolicy
+      cap: 4
+    plugins:
+    
+
+  AddrMapper:
+    impl: RoBaRaCoCh

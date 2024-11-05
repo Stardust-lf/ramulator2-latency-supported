@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-CACHE_SIZE = 2 * 1024 * 1024  # 2 MB cache size in bytes
+CACHE_SIZE = 16 * 1024  # 2 MB cache size in bytes
 CACHE_LINE_SIZE = 64  # Cache line size in bytes
 CACHE_LINES = CACHE_SIZE // CACHE_LINE_SIZE  # Total cache lines in cache
 
@@ -36,15 +36,20 @@ class LRUCache:
 
 # 初始化缓存和处理trace文件
 #traces = [603, 607, 619, 621, 628, 638, 644, 649, 654]
-traces = [600, 602, 605, 620, 623, 631, 641, 648, 657]
+# traces = [600, 602, 605, 620, 623, 631, 641, 648, 657]
+traces = [649]
 for trace in traces:
-    file_writes, w, r, lc = 0, 0, 0, 0
+
+    file_writes, w, r, lc ,lr = 0, 0, 0, 0, 0
     instr_count = 0  # 初始化CPU指令计数
     with open(f'/home/fan/projects/ramulator2/ctraces/{trace}_final.trace', 'w+') as fout:
         cache = LRUCache(CACHE_LINES, fout)
         with open(f'/home/fan/projects/ramulator2/ori_trace/{trace}.trace') as f:
             for line in f:
-                if lc % 1000000 == 0 and lc > 0:
+                lr += 1
+                if lr%1000000 == 0:
+                    print("Proceeding on line {}".format(lr))
+                if lc % 100000 == 0 and lc > 0:
                     print(f"Trace {trace}, written lines {lc}, w percentage {w / (w + r + 1)}, cache usage: {len(cache.cache)}/{CACHE_LINES}")
 
                 if lc >= 2_000_000:
