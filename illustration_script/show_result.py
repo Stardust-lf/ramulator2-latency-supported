@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Load the data
-data = pd.read_csv('sus_perf_results.csv')
+data = pd.read_csv('../result_csv/sus_perf_results.csv')
 plt.rcParams["font.family"] = "Times New Roman"
 # Convert trace column to string for matching dictionary keys
 data['trace'] = data['trace'].astype(str)

@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.ticker as ticker
 
 # 读取数据
-df = pd.read_csv("latency_results.csv")
+df = pd.read_csv("../result_csv/latency_results.csv")
 df[['memory_type', 'frequency', 'chip_width']] = df['config'].str.split('_', n=2, expand=True)
 df['chip_width'] = df['chip_width'].str.extract(r'(x4|x8|x16)')
 plt.rcParams["font.family"] = "Times New Roman"

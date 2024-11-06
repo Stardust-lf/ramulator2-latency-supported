@@ -11,7 +11,7 @@ Frontend:
               
 
 MemorySystem:
-  impl: GenericDRAM
+  impl: DualDRAM
   clock_ratio: 3
 
   DRAM:

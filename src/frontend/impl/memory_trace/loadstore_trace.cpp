@@ -19,7 +19,7 @@ class LoadStoreTrace : public IFrontEnd, public Implementation {
       bool is_write;
     };
     std::vector<Trace> m_trace;
-    size_t test_insts = 100000;
+    size_t test_insts = 1000000;
     size_t m_trace_length = 0;
     size_t m_curr_trace_idx = 0;
 

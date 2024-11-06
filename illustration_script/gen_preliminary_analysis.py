@@ -1,13 +1,34 @@
 import os
 import yaml
 import subprocess
-import re
 import pandas as pd
-from tqdm import tqdm  # 导入 tqdm 库
+import re
 
-# Directory containing the configuration files
-config_dir = "../base_exp_cfgs/"
-trace_files = [602, 603, 605, 607, 619, 620, 621, 623, 628, 654]
+# Path to the configuration file, trace directory, and output CSV
+config_path = "../sus_perf_test.yaml"
+trace_dir = "../final_traces/"
+output_csv = 'sus_perf_results.csv'
+# chip_timings = [
+#     "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
+#     "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
+#     "DDR5_4000BN", "DDR5_4000AN", "DDR5_4000C",
+#     "DDR5_4400BN", "DDR5_4400AN", "DDR5_4400C",
+#     "DDR5_4800BN", "DDR5_4800AN", "DDR5_4800C",
+#     "DDR5_5200BN", "DDR5_5200AN", "DDR5_5200C",
+#     "DDR5_5600BN", "DDR5_5600AN", "DDR5_5600C",
+#     "DDR5_6000BN", "DDR5_6000AN", "DDR5_6000C",
+#     "DDR5_6400BN", "DDR5_6400AN", "DDR5_6400C"
+# ]
+
+chip_timings = [
+    "DDR4_1600J", "DDR4_1600K", "DDR4_1600L",
+    "DDR4_1866L", "DDR4_1866M", "DDR4_1866N",
+    "DDR4_2133N", "DDR4_2133P", "DDR4_2133R",
+    "DDR4_2400P", "DDR4_2400R", "DDR4_2400U", "DDR4_2400T",
+    "DDR4_2666T", "DDR4_2666U", "DDR4_2666V", "DDR4_2666W",
+    "DDR4_2933V", "DDR5_2933W", "DDR4_2933Y", "DDR4_2933AA"
+    "DDR4_3200W", "DDR5_3200AA", "DDR4_3200AC"
+]
 
 def extract_info(output):
     """
@@ -16,66 +37,60 @@ def extract_info(output):
     :return: A dictionary containing all the extracted information.
     """
     info_dict = {}
-
-    # Regex pattern to match key-value pairs in the output (allowing numbers, underscores, and letters)
     matches = re.findall(r"(\w+):\s*([\d.]+)", output)
-
     for match in matches:
-        key = match[0]
+        key, value = match
         try:
-            value = float(match[1])
+            info_dict[key] = float(value)
         except ValueError:
-            value = None
-        info_dict[key] = value
-
+            info_dict[key] = None
     return info_dict
 
+# Initialize list to store results
+results = []
 
-# Initialize lists to store latencies for each config
-latency_results = []
+# Load the initial configuration file
+with open(config_path, 'r') as f:
+    config = yaml.safe_load(f)
 
-# Fetch all YAML configuration files from the directory
-config_files = [f for f in os.listdir(config_dir) if f.endswith('.yaml')]
+# Get a list of all trace files in the directory
+trace_files = [f for f in os.listdir(trace_dir) if f.endswith('.trace')]
 
-# Loop through all the configuration files and trace files to run the simulation
-total_iterations = len(config_files) * len(trace_files)  # Total number of iterations for the progress bar
-with tqdm(total=total_iterations, desc="Running simulations", unit="iteration") as pbar:  # Initialize progress bar
-    for config_file in config_files:
-        for filename in trace_files:
-            # Update progress bar description
-            pbar.set_postfix({'config': config_file, 'trace': filename})
+# Iterate over each trace file and each slow_chip_perf value
+for trace_filename in trace_files:
+    trace_path = os.path.join(trace_dir, trace_filename)
+    config['Frontend']['path'] = trace_path  # Set the current trace file
 
-            trace_file = f"../final_traces/{filename}.trace"
+    for timing in chip_timings:
+        print(f"Running simulation with trace {trace_filename} and slow_chip_perf = {timing}")
 
-            # Load the configuration file
-            config_path = os.path.join(config_dir, config_file)
-            with open(config_path, 'r') as f:
-                config = yaml.safe_load(f)
+        # Update slow_chip_perf for this iteration
+        config['DRAM']['timing']['present'] = timing
+        config['MemorySystem']["slow_timing"] = timing
 
-            # Update the trace file in the config
-            config['Frontend']['traces'] = [trace_file]
+        # Save the updated configuration to a temporary file
+        temp_config_path = "../temp/temp_config.yaml"
+        with open(temp_config_path, 'w') as temp_config:
+            yaml.dump(config, temp_config)
 
-            # Save the updated configuration to a temporary file
-            temp_config_path = "../temp/temp_config.yaml"
-            yaml_config_str = yaml.dump(config)
-            with open(temp_config_path, 'w+') as temp_config:
-                temp_config.write(yaml_config_str)
+        # Run the simulation and capture the output with a timeout
+        result = subprocess.run(['../ramulator2', '-f', temp_config_path], capture_output=True, text=True)
+        #print(result.stdout)
+        # Extract performance data
+        extracted_data = extract_info(result.stdout)
+        extracted_data['trace'] = trace_filename.split('.')[0]
+        extracted_data['timing'] = timing
 
-            # Run the simulation and capture the output
-            result = subprocess.run(['../ramulator2', '-f', temp_config_path], capture_output=True, text=True)
+        # Append extracted data to results list
+        results.append(extracted_data)
 
-            # Extract relevant data
-            extracted_data = extract_info(result.stdout)
+        # except subprocess.TimeoutExpired:
+        #     print(f"Simulation for {trace_filename} and slow_chip_perf = {timing} timed out. Skipping this iteration.")
 
-            # Append extracted data to the results list
-            latency_results.append({"config": config_file, "trace": filename, **extracted_data})
+# Convert the results to a pandas DataFrame and handle any NaN values
+df = pd.DataFrame(results).fillna('NaN')
 
-            pbar.update(1)  # Update the progress bar
+# Save the results to CSV
+df.to_csv(output_csv, index=False)
 
-# Convert the latencies to pandas DataFrame and handle NaN values
-latency_df = pd.DataFrame(latency_results).fillna('NaN')
-
-# Save the result to CSV
-latency_df.to_csv('latency_results.csv', index=False)
-
-print('All simulations are complete, and the results have been saved.')
+print(f"All simulations are complete. Results saved to {output_csv}.")

@@ -128,7 +128,7 @@ private:
       secondary_controller->m_is_write_mode = true;
     }
     bool request_found_sec = secondary_controller->schedule_request(sec_req_it, sec_buffer);
-    if(secondary_controller->m_is_write_mode){
+    if(secondary_controller->m_is_write_mode && primary_controller->m_is_write_mode){
       if(request_found_pri && !request_found_sec && m_prev_read){
         primary_controller->empty_tick();
         s_num_wait_cycles ++;
