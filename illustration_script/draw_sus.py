@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Load the data
-data = pd.read_csv('../result_csv/sus_perf_results.csv')
+data = pd.read_csv('sus_perf_results.csv')
 plt.rcParams["font.family"] = "Times New Roman"
 # Convert trace column to string for matching dictionary keys
 data['trace'] = data['trace'].astype(str)
@@ -64,5 +64,5 @@ for j in range(i + 1, num_rows * num_columns):
     fig.delaxes(axs[j // num_columns, j % num_columns])
 
 # Adjust layout to prevent overlap
-plt.tight_layout(h_pad=0,w_pad=-0.1)
+plt.tight_layout(h_pad=0,w_pad=0.1)
 plt.show()
