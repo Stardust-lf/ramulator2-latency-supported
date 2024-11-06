@@ -21,8 +21,10 @@ class DDR5 : public IDRAM, public Implementation {
       {"DDR5_32Gb_x4",  {32<<10,  4,  {1, 1, 8, 4, 1<<17, 1<<11}}},
       {"DDR5_32Gb_x8",  {32<<10,  8,  {1, 1, 8, 4, 1<<17, 1<<10}}},
       {"DDR5_32Gb_x16", {32<<10,  16, {1, 1, 4, 4, 1<<17, 1<<10}}},
-      {"DDR5_baseline", {(8<<9) * 4,   4,  {1, 2, 4, 8, 1<<16, 1<<10}}},
-      {"DDR5_design",   {(8<<9) * 3,   4,  {1, 1, 6, 8, 1<<16, 1<<10}}},
+      //   name          density      DQ   Ch Ra Bg Ba   Ro     Co
+      {"DDR5_baseline", {8<<11,       4,  {1, 2, 8, 4, 1<<16, 1<<11}}},
+      {"DDR5_design",   {(8<<9)*3,       4,  {1, 2, 12, 2, 1<<16, 1<<11}}},
+      {"DDR5_design2",   {(8<<9)*3,       4,  {1, 2, 4, 6, 1<<16, 1<<11}}},
       // {"DDR5_64Gb_x4",  {64<<10,  4,  {1, 1, 8, 4, 1<<18, 1<<11}}},
       // {"DDR5_64Gb_x8",  {64<<10,  8,  {1, 1, 8, 4, 1<<18, 1<<10}}},
       // {"DDR5_64Gb_x16", {64<<10,  16, {1, 1, 4, 4, 1<<18, 1<<10}}},
@@ -492,16 +494,15 @@ class DDR5 : public IDRAM, public Implementation {
       }(m_timing_vals("rate"));
 
       constexpr int nRRDL_TABLE[3][9] = {
-      // 3200 3600 4000  4400 4800 5200  5600 6000 6400 
-        { 8, 8, 8, 8, 8, 8, 8, 8, 8},  // x4
-        { 8, 8, 8, 8, 8, 8, 8, 8, 8 },  // x8
-        { 8, 8, 8, 8, 8, 8, 8, 8, 8 },  // x16
+        {16, 14, 12, 11, 10, 9, 9, 8, 8},  // x4
+        {16, 14, 12, 11, 10, 9, 9, 8, 8},  // x8
+        {16, 14, 12, 11, 10, 9, 9, 8, 8}   // x16
       };
       constexpr int nFAW_TABLE[3][9] = {
-      // 3200  3600 4000
-        { 40, 40, 40, 40, 40, 40, 40, 40, 40},  // x4
-        { 32, 40, 40, 40, 40, 40, 40, 40, 40},  // x8
-        { 32, 40, 40, 40, 40, 40, 40, 40, 40},  // x16
+      // 3200  3600 4000 4400 4800 5200 5600 6000 6400
+        {80, 71, 64, 58, 53, 49, 45, 42, 40},  // x4
+        {64, 56, 51, 46, 42, 39, 36, 34, 32},  // x8
+        {64, 56, 51, 46, 42, 39, 36, 34, 32}   // x16
       };
 
       if (dq_id != -1 && rate_id != -1) {
@@ -511,8 +512,7 @@ class DDR5 : public IDRAM, public Implementation {
 
       // tCCD_L_WR2 (with RMW) table
       constexpr int nCCD_L_WR2_TABLE[9] = {
-      // 3200  
-        32,32,32,32,32,32,32,32,32
+        64, 56, 51, 46, 42, 39, 36, 34, 32
       };
       if (dq_id == 0) {
         m_timing_vals("nCCDL_WR") = nCCD_L_WR2_TABLE[rate_id];
@@ -537,9 +537,9 @@ class DDR5 : public IDRAM, public Implementation {
       int density_id = [](int density_Mb) -> int { 
         switch (density_Mb) {
           case 8192:  return 0;
+          case 12288: return 1;
           case 16384: return 1;
           case 32768: return 2;
-          case 12288: return 1;
           default:    return -1;
         }
       }(m_organization.density);

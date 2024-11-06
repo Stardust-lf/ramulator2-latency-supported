@@ -91,6 +91,26 @@ class RoBaRaCoCh final : public LinearMapperBase, public Implementation {
     }
 };
 
+class RoBaRaCoChMod final : public LinearMapperBase, public Implementation {
+  RAMULATOR_REGISTER_IMPLEMENTATION(IAddrMapper, RoBaRaCoChMod, "RoBaRaCoChMod", "Applies a RoBaRaCoCh mapping to the address support non 2-power.");
+
+  public:
+    void init() override { };
+
+    void setup(IFrontEnd* frontend, IMemorySystem* memory_system) override {
+      LinearMapperBase::setup(frontend, memory_system);
+    }
+
+    void apply(Request& req) override {
+      req.addr_vec.resize(m_num_levels, -1);
+      Addr_t addr = req.addr >> m_tx_offset;
+      req.addr_vec[0] = slice_lower_bits(addr, m_addr_bits[0]);
+      req.addr_vec[m_addr_bits.size() - 1] = slice_lower_bits(addr, m_addr_bits[m_addr_bits.size() - 1]);
+      for (int i = 1; i <= m_row_bits_idx; i++) {
+        req.addr_vec[i] = slice_lower_bits(addr, m_addr_bits[i]);
+      }
+    }
+};
 
 class MOP4CLXOR final : public LinearMapperBase, public Implementation {
   RAMULATOR_REGISTER_IMPLEMENTATION(IAddrMapper, MOP4CLXOR, "MOP4CLXOR", "Applies a MOP4CLXOR mapping to the address.");
@@ -105,21 +125,16 @@ class MOP4CLXOR final : public LinearMapperBase, public Implementation {
     void apply(Request& req) override {
       req.addr_vec.resize(m_num_levels, -1);
       Addr_t addr = req.addr >> m_tx_offset;
-      req.addr_vec[m_col_bits_idx] = slice_lower_bits(addr, 2);
-      for (int lvl = 0 ; lvl < m_row_bits_idx ; lvl++)
-          req.addr_vec[lvl] = slice_lower_bits(addr, m_addr_bits[lvl]);
-      req.addr_vec[m_col_bits_idx] += slice_lower_bits(addr, m_addr_bits[m_col_bits_idx]-2) << 2;
-      req.addr_vec[m_row_bits_idx] = (int) addr;
 
-      int row_xor_index = 0; 
-      for (int lvl = 0 ; lvl < m_col_bits_idx ; lvl++){
-        if (m_addr_bits[lvl] > 0){
-          int mask = (req.addr_vec[m_col_bits_idx] >> row_xor_index) & ((1<<m_addr_bits[lvl])-1);
-          req.addr_vec[lvl] = req.addr_vec[lvl] xor mask;
-          row_xor_index += m_addr_bits[lvl];
-        }
+      // Update for non-power-of-2 structures using modulo
+      req.addr_vec[0] = addr % m_addr_bits[0];
+      req.addr_vec[m_addr_bits.size() - 1] = addr % m_addr_bits[m_addr_bits.size() - 1];
+      
+      for (int i = 1; i <= m_row_bits_idx; i++) {
+        req.addr_vec[i] = addr % m_addr_bits[i];
       }
     }
+
 };
 
 }   // namespace Ramulator
