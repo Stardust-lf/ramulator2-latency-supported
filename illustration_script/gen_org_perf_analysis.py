@@ -9,7 +9,14 @@ config_path = "../sus_perf_test.yaml"
 trace_dir = "../final_traces/"
 output_csv = 'org_perf_results.csv'
 timings = [
+    "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
+    "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
+    "DDR5_4000BN", "DDR5_4000AN", "DDR5_4000C",
+    "DDR5_4400BN", "DDR5_4400AN", "DDR5_4400C",
     "DDR5_4800BN", "DDR5_4800AN", "DDR5_4800C",
+    "DDR5_5200BN", "DDR5_5200AN", "DDR5_5200C",
+    "DDR5_5600BN", "DDR5_5600AN", "DDR5_5600C",
+    "DDR5_6000BN", "DDR5_6000AN", "DDR5_6000C",
     "DDR5_6400BN", "DDR5_6400AN", "DDR5_6400C"
 ]
 
@@ -63,7 +70,8 @@ for trace_filename in trace_files:
             # Extract performance data
             extracted_data = extract_info(result.stdout)
             extracted_data['trace'] = trace_filename.split('.')[0]
-            extracted_data['slow_timing'] = timing
+            extracted_data['timing'] = timing
+            extracted_data['organization'] = org
 
             # Append extracted data to results list
             results.append(extracted_data)
