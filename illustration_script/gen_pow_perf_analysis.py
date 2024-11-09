@@ -7,17 +7,12 @@ import re
 # Path to the configuration file, trace directory, and output CSV
 config_path = "../sus_perf_test.yaml"
 trace_dir = "../final_traces/"
-output_csv = 'sus_perf_results.csv'
-slow_chip_timings = [
-    "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
-    "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
-    "DDR5_4000BN", "DDR5_4000AN", "DDR5_4000C",
-    "DDR5_4400BN", "DDR5_4400AN", "DDR5_4400C",
-    "DDR5_4800BN", "DDR5_4800AN", "DDR5_4800C",
-    "DDR5_5200BN", "DDR5_5200AN", "DDR5_5200C",
-    "DDR5_5600BN", "DDR5_5600AN", "DDR5_5600C",
-    "DDR5_6000BN", "DDR5_6000AN", "DDR5_6000C",
-    "DDR5_6400BN", "DDR5_6400AN", "DDR5_6400C"
+output_csv = '../result_csv/pow_perf_results.csv'
+timings = [
+    "DDR5_4800BN",
+    "DDR5_5200BN",
+    "DDR5_5600BN",
+    "DDR5_6400BN",
 ]
 
 def extract_info(output):
@@ -51,11 +46,14 @@ for trace_filename in trace_files:
     trace_path = os.path.join(trace_dir, trace_filename)
     config['Frontend']['path'] = trace_path  # Set the current trace file
 
-    for timing in slow_chip_timings:
+    for timing in timings:
         print(f"Running simulation with trace {trace_filename} and slow_chip_perf = {timing}")
 
         # Update slow_chip_perf for this iteration
         config['MemorySystem']["slow_timing"] = timing
+        config['MemorySystem']['DRAM']['timing']['preset'] = timing
+        config['MemorySystem']['DRAM']['org']['rank'] = 1
+
 
         # Save the updated configuration to a temporary file
         temp_config_path = "../temp/temp_config.yaml"
@@ -69,7 +67,7 @@ for trace_filename in trace_files:
         extracted_data = extract_info(result.stdout)
         extracted_data['trace'] = trace_filename.split('.')[0]
         extracted_data['slow_timing'] = timing
-
+        # print(extracted_data["row_hit_rate_0"])
         # Append extracted data to results list
         results.append(extracted_data)
 

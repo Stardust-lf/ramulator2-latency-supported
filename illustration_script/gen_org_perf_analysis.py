@@ -65,7 +65,7 @@ for trace_filename in trace_files:
                 yaml.dump(config, temp_config)
 
             # Run the simulation and capture the output with a timeout
-            result = subprocess.run(['../ramulator2', '-f', temp_config_path], capture_output=True, text=True)
+            result = subprocess.run(['../build/ramulator2', '-f', temp_config_path], capture_output=True, text=True)
             #print(result.stdout)
             # Extract performance data
             extracted_data = extract_info(result.stdout)
