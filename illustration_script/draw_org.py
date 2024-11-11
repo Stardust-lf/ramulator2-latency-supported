@@ -10,11 +10,11 @@ plt.rcParams["font.family"] = "Times New Roman"
 data['trace'] = data['trace'].astype(str)
 
 # Extract frequency and configuration from 'slow_timing' column
-data['frequency'] = data['slow_timing'].str.extract(r'DDR5_(\d+)')[0].astype(int)
-data['configuration'] = data['slow_timing'].str.extract(r'DDR5_\d+(\w+)')[0]
+data['frequency'] = data['timing'].str.extract(r'DDR5_(\d+)')[0].astype(int)
+data['configuration'] = data['timing'].str.extract(r'DDR5_\d+(\w+)')[0]
 
 # Add 'org' column assuming rows appear in sets of three (Baseline, Design1, Design2)
-data['org'] = ['Baseline', 'Design1', 'Design2'] * (len(data) // 3)
+# data['org'] = ['Baseline', 'Design1', 'Design2'] * (len(data) // 3)
 
 # Mapping trace names for better readability
 trace_names = {
@@ -43,8 +43,8 @@ for i, (trace, trace_data) in enumerate(data.groupby('trace_name')):
     ax = axs[row, col] if num_rows > 1 else axs[col]
 
     # Plot each design as a set of bars
-    for j, org in enumerate(["Baseline", "Design1", "Design2"]):
-        org_data = trace_data[trace_data['org'] == org]
+    for j, org in enumerate(["DDR5_baseline", "DDR5_design", "DDR5_design2"]):
+        org_data = trace_data[trace_data['organization'] == org]
 
         # Set up x-axis with positions for each frequency-configuration combination
         x_positions = np.arange(len(unique_freq_configs))
