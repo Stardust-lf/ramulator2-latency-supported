@@ -48,6 +48,8 @@ class DualDRAMController final : public IDRAMController, public Implementation {
     size_t s_write_latency = 0;
     float s_avg_write_latency = 0;
 
+    float s_hit_rate = 0;
+
   public:
     void init() override {
       m_wr_low_watermark =  param<float>("wr_low_watermark").desc("Threshold for switching back to read mode.").default_val(0.2f);
@@ -107,6 +109,8 @@ class DualDRAMController final : public IDRAMController, public Implementation {
       register_stat(s_avg_read_latency).name("avg_read_latency_{}", m_channel_id);
       register_stat(s_write_latency).name("write_depart_latency_{}", m_channel_id);
       register_stat(s_avg_write_latency).name("avg_write_latency_{}", m_channel_id);
+
+      register_stat(s_hit_rate).name("row_hit_rate_{}", m_channel_id);
     };
 
     bool send(Request& req) override {
@@ -422,7 +426,7 @@ class DualDRAMController final : public IDRAMController, public Implementation {
       s_read_queue_len_avg = (float) s_read_queue_len / (float) m_clk;
       s_write_queue_len_avg = (float) s_write_queue_len / (float) m_clk;
       s_priority_queue_len_avg = (float) s_priority_queue_len / (float) m_clk;
-
+      s_hit_rate = (float) s_row_hits / (float)(s_row_hits + s_row_misses + s_row_conflicts);
       return;
     }
 

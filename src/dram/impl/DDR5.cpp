@@ -116,7 +116,11 @@ class DDR5 : public IDRAM, public Implementation {
 
     inline static const std::map<std::string, std::vector<double>> current_presets = {
       // name           IDD0  IDD2N   IDD3N   IDD4R   IDD4W   IDD5B   IPP0  IPP2N  IPP3N  IPP4R  IPP4W  IPP5B
-      {"Default",       {60,   50,     55,     145,    145,    362,     3,    3,     3,     3,     3,     48}},
+      {"Default",       {60,   50,     55,     145,    145,    362,     3,    3,     3,     3,     3,     48} },
+      {"4800",          {60,   50,     55,     145,    145,    362,     3,    3,     3,     3,     3,     48} },
+      {"5200",          {60,   50,     55,     145,    145,    362,     3,    3,     3,     3,     3,     48} },
+      {"5600",          {60,   50,     55,     145,    145,    362,     3,    3,     3,     3,     3,     48} },
+      {"6400",          {60,   50,     55,     145,    145,    362,     3,    3,     3,     3,     3,     48} }
     };
   /************************************************
    *                Organization

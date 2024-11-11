@@ -25,11 +25,11 @@ MemorySystem:
     impl: DDR5
     org:
       channel: 1
-      preset: DDR5_design2
-      rank: 2
+      preset: DDR5_8Gb_x4
+      rank: 1
     timing:
-      preset: DDR5_6400C
+      preset: DDR5_6400BN
   clock_ratio: 3
   impl: DualChannelDRAM
   slow_impl: DDR5
-  slow_timing: DDR5_6400C
+  slow_timing: DDR5_6400BN
