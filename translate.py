@@ -37,12 +37,12 @@ class LRUCache:
 # 初始化缓存和处理trace文件
 #traces = [603, 607, 619, 621, 628, 638, 644, 649, 654]
 # traces = [600, 602, 605, 620, 623, 631, 641, 648, 657]
-traces = ["pr_twi","pr_web"]
+traces = ["bc_twi","bc_web","cc_twi","cc_web","pr_twi","pr_web"]
 for trace in traces:
 
     file_writes, w, r, lc ,lr = 0, 0, 0, 0, 0
     instr_count = 0  # 初始化CPU指令计数
-    with open(f'/home/fan/projects/ramulator2/ctraces/{trace}_final.trace', 'w+') as fout:
+    with open(f'/home/fan/projects/ramulator2/ctraces/{trace}.trace', 'w+') as fout:
         cache = LRUCache(CACHE_LINES, fout)
         with open(f'/home/fan/projects/ramulator2/ori_trace/{trace}.trace') as f:
             for line in f:
@@ -59,8 +59,10 @@ for trace in traces:
 
                 try:
                     sp = line.split(' ')
-                    cpu_instr_count = int(sp[0])  # 从 sp[0] 获取 CPU 指令数量
+
+                    cpu_instr_count = min(int(sp[0]),128)  # 从 sp[0] 获取 CPU 指令数量
                     address = int(sp[2][:-1], 16)  # 转换地址为整数
+                    address %= 2147483648
                     aligned_address = (address // CACHE_LINE_SIZE) * CACHE_LINE_SIZE  # 对齐缓存行
 
                     # 累加 CPU 指令数量

@@ -5,7 +5,7 @@ Frontend:
   clock_ratio: 8
   impl: LoadStoreTrace
   num_expected_insts: 1000000
-  path: ../final_traces/619.trace
+  path: ../final_traces/pr_web.trace
 MemorySystem:
   AddrMapper:
     impl: RoBaRaCoCh
@@ -26,10 +26,10 @@ MemorySystem:
     org:
       channel: 1
       preset: DDR5_8Gb_x4
-      rank: 1
+      rank: 2
     timing:
-      preset: DDR5_6400BN
+      preset: DDR5_6400AN
   clock_ratio: 3
   impl: DualChannelDRAM
   slow_impl: DDR5
-  slow_timing: DDR5_6400BN
+  slow_timing: DDR5_6400C

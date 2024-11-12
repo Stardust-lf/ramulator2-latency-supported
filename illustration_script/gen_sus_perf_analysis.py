@@ -4,10 +4,11 @@ import subprocess
 import pandas as pd
 import re
 
+
 # Path to the configuration file, trace directory, and output CSV
 config_path = "../sus_perf_test.yaml"
 trace_dir = "../final_traces/"
-output_csv = 'sus_perf_results.csv'
+output_csv = 'sus_gap_results.csv'
 slow_chip_timings = [
     "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
     "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
@@ -42,14 +43,16 @@ results = []
 # Load the initial configuration file
 with open(config_path, 'r') as f:
     config = yaml.safe_load(f)
-
+print(config)
 # Get a list of all trace files in the directory
-trace_files = [f for f in os.listdir(trace_dir) if f.endswith('.trace')]
-
+# trace_files = [f for f in os.listdir(trace_dir) if f.endswith('.trace')]
+trace_files = ["bc_twi.trace","bc_web.trace",
+               "cc_twi.trace","cc_web.trace",
+               "pr_twi.trace","pr_web.trace"]
 # Iterate over each trace file and each slow_chip_perf value
 for trace_filename in trace_files:
     trace_path = os.path.join(trace_dir, trace_filename)
-    config['Frontend']['path'] = trace_path  # Set the current trace file
+    config['Frontend']['path'] = trace_path # Set the current trace file
 
     for timing in slow_chip_timings:
         print(f"Running simulation with trace {trace_filename} and slow_chip_perf = {timing}")
