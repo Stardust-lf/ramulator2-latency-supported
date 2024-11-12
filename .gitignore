@@ -5,5 +5,5 @@ ramulator2
 *.so
 autobuild.sh
 /ctraces
-*.trace
 *.ctrace
+*.trace
