@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Load the data
-data = pd.read_csv('sus_perf_results.csv')
+data = pd.read_csv('sus_gap_results.csv')
 plt.rcParams["font.family"] = "Times New Roman"
 # Convert trace column to string for matching dictionary keys
 data['trace'] = data['trace'].astype(str)
@@ -23,7 +23,8 @@ trace_names = {
     '600': 'perlbench', '602': 'gcc', '605': 'mcf', '620': 'omnetpp', '623': 'xalancbmk',
     '625': 'x264', '631': 'deepsjeng', '641': 'leela', '648': 'exchange2', '657': 'xz',
     '603': 'bwaves', '607': 'cactuBSSN', '619': 'lbm', '621': 'wrf', '627': 'cam4',
-    '628': 'pop2', '638': 'imagick', '644': 'nab', '649': 'fotonik3d', '654': 'roms'
+    '628': 'pop2', '638': 'imagick', '644': 'nab', '649': 'fotonik3d', '654': 'roms',
+    'bc_twi':'bc twi', 'bc_web':'bc web', 'cc_twi':'cc twi', 'cc_web':'cc web', 'pr_twi':'pr twi', 'pr_web':'pr web'
 }
 
 # Define the consistent order of configurations
@@ -65,4 +66,5 @@ for j in range(i + 1, num_rows * num_columns):
 
 # Adjust layout to prevent overlap
 plt.tight_layout(h_pad=0,w_pad=0.1)
+plt.savefig('../figures/sus_stat_gap.jpg')
 plt.show()
