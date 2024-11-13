@@ -37,7 +37,8 @@ class LRUCache:
 # 初始化缓存和处理trace文件
 #traces = [603, 607, 619, 621, 628, 638, 644, 649, 654]
 # traces = [600, 602, 605, 620, 623, 631, 641, 648, 657]
-traces = ["bc_twi","bc_web","cc_twi","cc_web","pr_twi","pr_web"]
+# traces = ["bc_twi","bc_web","cc_twi","cc_web","pr_twi","pr_web"]
+traces = ["bfs_twi","bfs_web","bfs_road","bc_road","cc_road","pr_road"]
 for trace in traces:
 
     file_writes, w, r, lc ,lr = 0, 0, 0, 0, 0
