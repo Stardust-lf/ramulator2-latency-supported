@@ -8,7 +8,7 @@ import re
 # Path to the configuration file, trace directory, and output CSV
 config_path = "../sus_perf_test.yaml"
 trace_dir = "../final_traces/"
-output_csv = 'sus_gap_p2_results.csv'
+output_csv = 'sus_gap_p3_results.csv'
 slow_chip_timings = [
     "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
     "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
@@ -49,8 +49,9 @@ print(config)
 # trace_files = ["bc_twi.trace","bc_web.trace",
 #                "cc_twi.trace","cc_web.trace",
 #                "pr_twi.trace","pr_web.trace"]
-trace_files = ["bfs_twi.trace","bfs_web.trace","bfs_road.trace"
-               "bc_road.trace","cc_road.trace","pr_road.trace"]
+# trace_files = ["bfs_twi.trace","bfs_web.trace","bfs_road.trace"
+#                "bc_road.trace","cc_road.trace","pr_road.trace"]
+trace_files = ["bfs_road.trace"]
 # Iterate over each trace file and each slow_chip_perf value
 for trace_filename in trace_files:
     trace_path = os.path.join(trace_dir, trace_filename)
