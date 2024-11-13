@@ -19,7 +19,6 @@ class LoadStoreTrace : public IFrontEnd, public Implementation {
       bool is_write;
     };
     std::vector<Trace> m_trace;
-    size_t test_insts = 1000000;
     size_t m_trace_length = 0;
     size_t m_curr_trace_idx = 0;
 
@@ -35,12 +34,12 @@ class LoadStoreTrace : public IFrontEnd, public Implementation {
       m_logger = Logging::create_logger("LoadStoreTrace");
       // m_logger->info("Loading trace file {} ...", trace_path_str);
       init_trace(trace_path_str);
-      // m_logger->info("Loaded {} lines.", m_trace.size());
+      m_logger->info("Loaded {} lines.", m_trace.size());
     };
 
 
     void tick() override {
-      if(m_trace_count >= test_insts){
+      if(m_curr_trace_idx >= m_trace.size()){
         return;
       }
       Trace& t = m_trace[m_curr_trace_idx];
@@ -50,7 +49,7 @@ class LoadStoreTrace : public IFrontEnd, public Implementation {
       }
       bool request_sent = m_memory_system->send({t.addr, t.is_write ? Request::Type::Write : Request::Type::Read});
       if (request_sent) {
-        m_curr_trace_idx = (m_curr_trace_idx + 1) % m_trace_length;
+        m_curr_trace_idx++;
         m_trace_count++;
         if (m_trace_count % 200000 == 0){
           m_logger->info("Running on instance count {}", m_trace_count);
@@ -73,7 +72,7 @@ class LoadStoreTrace : public IFrontEnd, public Implementation {
 
       std::string line;
       size_t num_line_insts = 0;
-      while (std::getline(trace_file, line) && num_line_insts<test_insts) {
+      while (std::getline(trace_file, line)) {
         std::vector<std::string> tokens;
         tokenize(tokens, line, " ");
 
@@ -99,7 +98,7 @@ class LoadStoreTrace : public IFrontEnd, public Implementation {
     // TODO: FIXME
     bool is_finished() override {
       bool finish = false;
-      if(m_trace_count >= test_insts && m_memory_system->is_finished()){
+      if(m_trace_count >= m_trace.size() && m_memory_system->is_finished()){
         finish = true;
       }
       return finish;

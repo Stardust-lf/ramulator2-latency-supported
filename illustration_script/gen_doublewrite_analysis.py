@@ -4,10 +4,11 @@ import subprocess
 import pandas as pd
 import re
 
+
 # Path to the configuration file, trace directory, and output CSV
 config_path = "../sus_perf_test.yaml"
-trace_dir = "../short_traces/"
-output_csv = 'sus_final_results.csv'
+trace_dir = "../processed_traces/"
+output_csv = 'double_write_results.csv'
 slow_chip_timings = [
     "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
     # "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
@@ -50,7 +51,7 @@ print(config)
 #                "pr_twi.trace","pr_web.trace"]
 # trace_files = ["bfs_twi.trace","bfs_web.trace","bfs_road.trace"
 #                "bc_road.trace","cc_road.trace","pr_road.trace"]
-trace_files = [filename for filename in os.listdir(trace_dir)]
+trace_files = ["bfs_road.trace"]
 # Iterate over each trace file and each slow_chip_perf value
 for trace_filename in trace_files:
     trace_path = os.path.join(trace_dir, trace_filename)
