@@ -399,7 +399,7 @@ class DDR5 : public IDRAM, public Implementation {
       // Channel width
       m_channel_width = param_group("org").param<int>("channel_width").default_val(32);
 
-      // Organization
+      // Organizationrate_id
       m_organization.count.resize(m_levels.size(), -1);
 
       // Load organization preset if provided
@@ -487,18 +487,18 @@ class DDR5 : public IDRAM, public Implementation {
 
       int rate_id = [](int rate) -> int {
         switch (rate) {
-          case 3200:  return 0;
-          case 3600:  return 1;
-          case 4000:  return 2;
-          case 4400:  return 3;
-          case 4800:  return 4;
-          case 5200:  return 5;
-          case 5600:  return 6;
-          case 6000:  return 7;
-          case 6400:  return 8;
+          case 1250:  return 0;
+          case 1112:  return 1;
+          case 800:  return 2;
+          case 658:  return 3;
+          case 553:  return 4;
+          case 472:  return 5;
+          case 407:  return 6;
+          case 356:  return 7;
+          case 312:  return 8;
           default:    return -1;
         }
-      }(m_timing_vals("rate"));
+      }(m_timing_vals("tCK_ps"));
 
       constexpr int nRRDL_TABLE[3][10] = {
         {18, 16, 14, 12, 11, 10, 9, 9, 8, 8},  // x4
