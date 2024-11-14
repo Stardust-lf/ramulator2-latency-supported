@@ -32,4 +32,4 @@ MemorySystem:
   clock_ratio: 3
   impl: DualChannelDRAM
   slow_impl: DDR5
-  slow_timing: DDR5_3200AN
+  slow_timing: DDR5_3600AN
