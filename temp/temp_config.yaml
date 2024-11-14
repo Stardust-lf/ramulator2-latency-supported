@@ -5,7 +5,7 @@ Frontend:
   clock_ratio: 8
   impl: LoadStoreTrace
   num_expected_insts: 1000000
-  path: ../short_traces/bc_twi.trace
+  path: ../short_traces/619.trace
 MemorySystem:
   AddrMapper:
     impl: RoBaRaCoCh
@@ -32,4 +32,4 @@ MemorySystem:
   clock_ratio: 3
   impl: DualChannelDRAM
   slow_impl: DDR5
-  slow_timing: DDR5_6400BN
+  slow_timing: DDR5_6400AN
