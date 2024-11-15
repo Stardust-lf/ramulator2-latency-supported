@@ -4,17 +4,17 @@ import numpy as np
 
 # Load the data
 data = pd.read_csv('org_perf_results.csv')
-plt.rcParams["font.family"] = "Times New Roman"
+#plt.rcParams["font.family"] = "Times New Roman"
 
 # Convert trace column to string for matching dictionary keys
 data['trace'] = data['trace'].astype(str)
 
-# Extract frequency and configuration from 'slow_timing' column
+# Extract frequency and configuration from 'timing' column
 data['frequency'] = data['timing'].str.extract(r'DDR5_(\d+)')[0].astype(int)
 data['configuration'] = data['timing'].str.extract(r'DDR5_\d+(\w+)')[0]
 
-# Add 'org' column assuming rows appear in sets of three (Baseline, Design1, Design2)
-# data['org'] = ['Baseline', 'Design1', 'Design2'] * (len(data) // 3)
+# Filter for 6400 MHz data only
+data_6400 = data[data['frequency'] == 6400]
 
 # Mapping trace names for better readability
 trace_names = {
@@ -23,45 +23,60 @@ trace_names = {
     '603': 'bwaves', '607': 'cactuBSSN', '619': 'lbm', '621': 'wrf', '627': 'cam4',
     '628': 'pop2', '638': 'imagick', '644': 'nab', '649': 'fotonik3d', '654': 'roms'
 }
-data['trace_name'] = data['trace'].map(trace_names)
+data_6400['trace_name'] = data_6400['trace'].map(trace_names)
 
-# Define unique frequency-configuration combinations as x-axis labels
-data['freq_config'] = data['frequency'].astype(str) + data['configuration']
-unique_freq_configs = sorted(data['freq_config'].unique())
+# Define benchmark order based on provided list
+custom_order = ['623', '603', '602', '605', '607', '621', '628', '654', '619', '620']
+unique_traces = [trace_names[trace] for trace in custom_order]
 
-# Define grid layout with 5 columns and 2 rows
-num_columns = 5
-num_rows = 2
-fig, axs = plt.subplots(num_rows, num_columns, figsize=(12, 8), sharey=True)
-fig.suptitle("Memory System Cycles by Frequency-Configuration and Design for Each Benchmark", fontsize=16)
+# Define x-axis positions
+x_positions = np.arange(len(unique_traces))
 
-# Plot each trace in its own subplot
-for i, (trace, trace_data) in enumerate(data.groupby('trace_name')):
-    row, col = divmod(i, num_columns)
+# Define colors for the three designs
+colors = ['#FFCC99', '#FF9966', '#FF6600']  # Lightest to darkest orange
 
-    # Select the axis for this subplot
-    ax = axs[row, col] if num_rows > 1 else axs[col]
+# Calculate write operation ratio for each trace
+write_ratio = data_6400.groupby('trace').apply(
+    lambda df: df['total_num_write_requests'].sum() /
+               (df['total_num_write_requests'].sum() + df['total_num_read_requests'].sum()) * 100
+)
+write_ratio_sorted = [write_ratio[trace] if trace in write_ratio else 0 for trace in custom_order]
 
-    # Plot each design as a set of bars
-    for j, org in enumerate(["DDR5_baseline", "DDR5_design", "DDR5_design2"]):
-        org_data = trace_data[trace_data['organization'] == org]
+# Create the plot
+fig, ax1 = plt.subplots(figsize=(8, 6),dpi=100)
 
-        # Set up x-axis with positions for each frequency-configuration combination
-        x_positions = np.arange(len(unique_freq_configs))
-        y_values = [org_data[org_data['freq_config'] == fc]['memory_system_cycles'].values[0]
-                    if fc in org_data['freq_config'].values else 0
-                    for fc in unique_freq_configs]
+# Plot Baseline, Design1, and Design2 as separate columns
+for j, org in enumerate(["DDR5_baseline", "DDR5_design", "DDR5_design2"]):
+    org_data = data_6400[data_6400['organization'] == org]
 
-        # Plot the bars with an offset for each design
-        ax.bar(x_positions + j * 0.2, y_values, width=0.2, label=org)
+    # Get y-values for each trace in the custom order
+    y_values = [org_data[org_data['trace'] == trace]['memory_system_cycles'].values[0]
+                if trace in org_data['trace'].values else 0
+                for trace in custom_order]
 
-    # Customize each subplot
-    ax.set_title(trace)
-    ax.set_xticks(x_positions + 0.3)
-    ax.set_xticklabels(unique_freq_configs, rotation=45, ha="right")
-    ax.grid(True)
-    ax.legend(loc="upper right", fontsize=8, title="Design")
+    # Plot bars with an offset for each design
+    ax1.bar(x_positions + j * 0.25, y_values, width=0.25, label=org, color=colors[j])
+
+# Customize the left axis
+ax1.set_ylabel("Memory System Cycles", fontsize=12, color="#ff7f0e")
+ax1.tick_params(axis='y', labelcolor="#ff7f0e")
+ax1.set_xticks(x_positions + 0.25)
+ax1.set_xticklabels(unique_traces, rotation=45, ha="right")
+ax1.grid(axis="y", linestyle="--", alpha=0.7)
+
+# Add a secondary y-axis for write ratio
+ax2 = ax1.twinx()
+ax2.plot(x_positions + 0.25, write_ratio_sorted, color="#1f77b4", marker='o', linestyle='--', label="Write Ratio (%)")
+ax2.set_ylabel("Write Ratio (%)", fontsize=12, color="#1f77b4")
+ax2.tick_params(axis='y', labelcolor="#1f77b4")
+
+# Add legends
+fig.legend(loc='upper right', bbox_to_anchor=(0.9, 0.85), fontsize=10, title="Legend")
+
+# Set plot title
+#ax1.set_title("Memory System Cycles and Write Ratio for 6400 MHz by Benchmark", fontsize=16)
 
 # Adjust layout to prevent overlap
-plt.tight_layout(rect=[0, 0, 1, 0.95])
+plt.tight_layout()
+plt.savefig("Org_design")
 plt.show()

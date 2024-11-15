@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 plt.rcParams["font.family"] = "Times New Roman"
 # Trace 名称映射
@@ -10,6 +11,8 @@ trace_names = {
     '603': 'bwaves', '607': 'cactuBSSN', '619': 'lbm', '621': 'wrf', '627': 'cam4',
     '628': 'pop2', '638': 'imagick', '644': 'nab', '649': 'fotonik3d', '654': 'roms'
 }
+
+trace_files = [f for f in os.listdir("") if f.endswith('.trace')]
 
 # 读取 CSV 文件
 input_csv_path = "../result_csv/power_stat.csv"

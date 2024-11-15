@@ -8,29 +8,16 @@ import re
 config_path = "../sus_perf_test.yaml"
 trace_dir = "../short_traces/"
 output_csv = 'sus_final_results.csv'
-# slow_chip_timings = [
-#     #"DDR5_2400BN", "DDR5_3200AN", "DDR5_3200C",
-#     "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
-#     # "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
-#     # "DDR5_4000BN", "DDR5_4000AN", "DDR5_4000C",
-#     # "DDR5_4400BN", "DDR5_4400AN", "DDR5_4400C",
-#     # "DDR5_4800BN", "DDR5_4800AN", "DDR5_4800C",
-#     # "DDR5_5200BN", "DDR5_5200AN", "DDR5_5200C",
-#     # "DDR5_5600BN", "DDR5_5600AN", "DDR5_5600C",
-#     # "DDR5_6000BN", "DDR5_6000AN", "DDR5_6000C",
-#     "DDR5_6400BN", "DDR5_6400AN", "DDR5_6400C"
-# ]
 slow_chip_timings = [
-     #"DDR5_2400AN",
-     "DDR5_3200AN",
-     "DDR5_3600AN",
-     "DDR5_4000AN",
-     "DDR5_4400AN",
-     "DDR5_4800AN",
-     "DDR5_5200AN",
-     "DDR5_5600AN",
-     "DDR5_6000AN",
-     "DDR5_6400AN",
+    "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
+    # "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
+    # "DDR5_4000BN", "DDR5_4000AN", "DDR5_4000C",
+    # "DDR5_4400BN", "DDR5_4400AN", "DDR5_4400C",
+    # "DDR5_4800BN", "DDR5_4800AN", "DDR5_4800C",
+    # "DDR5_5200BN", "DDR5_5200AN", "DDR5_5200C",
+    # "DDR5_5600BN", "DDR5_5600AN", "DDR5_5600C",
+    # "DDR5_6000BN", "DDR5_6000AN", "DDR5_6000C",
+    "DDR5_6400BN", "DDR5_6400AN", "DDR5_6400C"
 ]
 
 def extract_info(output):
@@ -64,7 +51,6 @@ print(config)
 # trace_files = ["bfs_twi.trace","bfs_web.trace","bfs_road.trace"
 #                "bc_road.trace","cc_road.trace","pr_road.trace"]
 trace_files = [filename for filename in os.listdir(trace_dir)]
-#trace_files = ["bc_twi.trace"]
 # Iterate over each trace file and each slow_chip_perf value
 for trace_filename in trace_files:
     trace_path = os.path.join(trace_dir, trace_filename)
