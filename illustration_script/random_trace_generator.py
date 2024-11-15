@@ -71,7 +71,7 @@ def generate_unique_address_trace(num_entries, write_ratio, min_address, max_add
         prefix = random.randint(1, 20)
 
         # Append the trace entry
-        trace.append(f"{prefix} {operation} {address}")
+        trace.append(f"0 {operation} {address}")
 
     return trace
 
