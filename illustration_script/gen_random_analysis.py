@@ -22,6 +22,7 @@ slow_chip_timings = [
     # "DDR5_5600BN", "DDR5_5600AN", "DDR5_5600C",
     # "DDR5_6000BN", "DDR5_6000AN", "DDR5_6000C",
     #"DDR5_6400BN", "DDR5_6400AN", "DDR5_6400C"
+    "DDR5_6400AN"
 ]
 
 def extract_info(output):
