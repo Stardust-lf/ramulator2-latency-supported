@@ -84,7 +84,7 @@ if __name__ == "__main__":
     max_address = 0xFFFFFFFF  # Maximum address
     alignment = 64  # Addresses must be aligned to 64 bytes
 
-    for write_ratio in range(1, 10):
+    for write_ratio in range(1, 11):
         # Generate the trace
         random_trace = generate_unique_address_trace(num_entries, write_ratio / 10, min_address, max_address, alignment)
 

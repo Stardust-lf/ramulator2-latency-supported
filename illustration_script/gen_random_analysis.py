@@ -10,10 +10,10 @@ trace_dir = "../random_traces/"
 output_csv = 'sus_pressure_results.csv'
 slow_chip_timings = [
     #"DDR5_3200BN",
-    #"DDR5_3200AN",
+    "DDR5_3200AN",
     #"DDR5_3200C",
     #"DDR5_3600BN",
-    "DDR5_3600AN",
+    #"DDR5_3600AN",
     # "DDR5_3600C",
     # "DDR5_4000BN", "DDR5_4000AN", "DDR5_4000C",
     # "DDR5_4400BN", "DDR5_4400AN", "DDR5_4400C",
