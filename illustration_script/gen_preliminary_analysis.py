@@ -7,27 +7,17 @@ import re
 # Path to the configuration file, trace directory, and output CSV
 config_path = "../sus_perf_test.yaml"
 trace_dir = "../final_traces/"
-output_csv = 'sus_perf_results.csv'
-# chip_timings = [
-#     "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
-#     "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
-#     "DDR5_4000BN", "DDR5_4000AN", "DDR5_4000C",
-#     "DDR5_4400BN", "DDR5_4400AN", "DDR5_4400C",
-#     "DDR5_4800BN", "DDR5_4800AN", "DDR5_4800C",
-#     "DDR5_5200BN", "DDR5_5200AN", "DDR5_5200C",
-#     "DDR5_5600BN", "DDR5_5600AN", "DDR5_5600C",
-#     "DDR5_6000BN", "DDR5_6000AN", "DDR5_6000C",
-#     "DDR5_6400BN", "DDR5_6400AN", "DDR5_6400C"
-# ]
-
-chip_timings = [
-    "DDR4_1600J", "DDR4_1600K", "DDR4_1600L",
-    "DDR4_1866L", "DDR4_1866M", "DDR4_1866N",
-    "DDR4_2133N", "DDR4_2133P", "DDR4_2133R",
-    "DDR4_2400P", "DDR4_2400R", "DDR4_2400U", "DDR4_2400T",
-    "DDR4_2666T", "DDR4_2666U", "DDR4_2666V", "DDR4_2666W",
-    "DDR4_2933V", "DDR5_2933W", "DDR4_2933Y", "DDR4_2933AA"
-    "DDR4_3200W", "DDR5_3200AA", "DDR4_3200AC"
+output_csv = 'baseline_perf_results.csv'
+timings = [
+    "DDR5_3200AN",
+    "DDR5_3600AN",
+    "DDR5_4000AN",
+    "DDR5_4400AN",
+    "DDR5_4800AN",
+    "DDR5_5200AN",
+    "DDR5_5600AN",
+    "DDR5_6000AN",
+    "DDR5_6400AN",
 ]
 
 def extract_info(output):
@@ -61,12 +51,13 @@ for trace_filename in trace_files:
     trace_path = os.path.join(trace_dir, trace_filename)
     config['Frontend']['path'] = trace_path  # Set the current trace file
 
-    for timing in chip_timings:
-        print(f"Running simulation with trace {trace_filename} and slow_chip_perf = {timing}")
+    for timing in timings:
+
+        print(f"Running simulation with trace {trace_filename} and timing = {timing}")
 
         # Update slow_chip_perf for this iteration
-        config['DRAM']['timing']['present'] = timing
         config['MemorySystem']["slow_timing"] = timing
+        config['MemorySystem']['DRAM']['timing']['preset'] = timing
 
         # Save the updated configuration to a temporary file
         temp_config_path = "../temp/temp_config.yaml"
@@ -74,12 +65,12 @@ for trace_filename in trace_files:
             yaml.dump(config, temp_config)
 
         # Run the simulation and capture the output with a timeout
-        result = subprocess.run(['../ramulator2', '-f', temp_config_path], capture_output=True, text=True)
+        result = subprocess.run(['../build/ramulator2', '-f', temp_config_path], capture_output=True, text=True)
         #print(result.stdout)
         # Extract performance data
         extracted_data = extract_info(result.stdout)
         extracted_data['trace'] = trace_filename.split('.')[0]
-        extracted_data['timing'] = timing
+
 
         # Append extracted data to results list
         results.append(extracted_data)
