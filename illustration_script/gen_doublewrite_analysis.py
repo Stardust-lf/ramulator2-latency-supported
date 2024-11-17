@@ -1,105 +1,81 @@
-import os
-import yaml
-import subprocess
 import pandas as pd
-import re
+import matplotlib.pyplot as plt
 
-# Path to the configuration file, trace directory, and output CSV
-config_path = "../sus_perf_test.yaml"
-trace_dir = "../modified_doubleW_traces/"
-baseline_trace_dir = "../wb_short_trace/"
-output_csv = 'sus_doubleW_wb_results.csv'
-# slow_chip_timings = [
-#     "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
-#     # "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
-#     # "DDR5_4000BN", "DDR5_4000AN", "DDR5_4000C",
-#     # "DDR5_4400BN", "DDR5_4400AN", "DDR5_4400C",
-#     # "DDR5_4800BN", "DDR5_4800AN", "DDR5_4800C",
-#     # "DDR5_5200BN", "DDR5_5200AN", "DDR5_5200C",
-#     # "DDR5_5600BN", "DDR5_5600AN", "DDR5_5600C",
-#     # "DDR5_6000BN", "DDR5_6000AN", "DDR5_6000C",
-#     "DDR5_6400BN", "DDR5_6400AN", "DDR5_6400C"
-# ]
-slow_chip_timings = [
-    #"DDR5_1600AN",
-    "DDR5_3200AN",
-    #"DDR5_3600AN",
-    #"DDR5_4000AN",
-    #"DDR5_4400AN",
-    #"DDR5_4800AN",
-    #"DDR5_5200AN",
-    #"DDR5_5600AN",
-    #"DDR5_6000AN",
-    "DDR5_6400AN",
-]
-def extract_info(output):
-    """
-    Extracts all numerical information from the simulator output string and returns it as a dictionary.
-    :param output: The output string from the simulator.
-    :return: A dictionary containing all the extracted information.
-    """
-    info_dict = {}
-    matches = re.findall(r"(\w+):\s*([\d.]+)", output)
-    for match in matches:
-        key, value = match
-        try:
-            info_dict[key] = float(value)
-        except ValueError:
-            info_dict[key] = None
-    return info_dict
+# Load the uploaded CSV file
+file_path = 'sus_doubleW_wb_results.csv'
+data = pd.read_csv(file_path)
 
-# Initialize list to store results
-results = []
+# Filter data for the two folders: doubleW and wbshorttrace
+doubleW_data = data[data['folder'] == 'modified_doubleW_traces']
+wbshorttrace_data = data[data['folder'] == 'wb_short_trace']
 
-# Load the initial configuration file
-with open(config_path, 'r') as f:
-    config = yaml.safe_load(f)
-print(config)
-# Get a list of all trace files in the directory
-# trace_files = [f for f in os.listdir(trace_dir) if f.endswith('.trace')]
-# trace_files = ["bc_twi.trace","bc_web.trace",
-#                "cc_twi.trace","cc_web.trace",
-#                "pr_twi.trace","pr_web.trace"]
-# trace_files = ["bfs_twi.trace","bfs_web.trace","bfs_road.trace"
-#                "bc_road.trace","cc_road.trace","pr_road.trace"]
-trace_files = [filename for filename in os.listdir(trace_dir)]
-# Iterate over each trace file and each slow_chip_perf value
-for trace_filename in trace_files:
-    trace_path = os.path.join(trace_dir, trace_filename)
-    base_trace_path = os.path.join(baseline_trace_dir, trace_filename)
-    for trace_name in [trace_path, base_trace_path]:
-        print("Running on ", trace_name.split('/')[1])
-        config['Frontend']['path'] = trace_name # Set the current trace file
+# Merge the datasets on 'trace' and 'slow_timing' to align the corresponding traces and frequencies
+merged_data = pd.merge(doubleW_data, wbshorttrace_data, on=['trace', 'slow_timing'], suffixes=('_doubleW', '_wbshorttrace'))
 
-        for timing in slow_chip_timings:
-            print(f"Running simulation with trace {trace_filename} and slow_chip_perf = {timing}")
+# Calculate write ratios
+merged_data['write_ratio_doubleW'] = (
+    merged_data['total_num_write_requests_doubleW'] /
+    (merged_data['total_num_write_requests_doubleW'] + merged_data['total_num_read_requests_doubleW'])
+)
+merged_data['write_ratio_wbshorttrace'] = (
+    merged_data['total_num_write_requests_wbshorttrace'] /
+    (merged_data['total_num_write_requests_wbshorttrace'] + merged_data['total_num_read_requests_wbshorttrace'])
+)
 
-            # Update slow_chip_perf for this iteration
-            config['MemorySystem']["slow_timing"] = timing
-            config['MemorySystem']['DRAM']['timing']['preset'] = timing
-            # Save the updated configuration to a temporary file
-            temp_config_path = "../temp/temp_config.yaml"
-            with open(temp_config_path, 'w') as temp_config:
-                yaml.dump(config, temp_config)
+# Calculate average write ratio
+merged_data['avg_write_ratio'] = (merged_data['write_ratio_doubleW'] + merged_data['write_ratio_wbshorttrace']) / 2
 
-            # Run the simulation and capture the output with a timeout
-            result = subprocess.run(['../build/ramulator2', '-f', temp_config_path], capture_output=True, text=True)
-            #print(result.stdout)
-            # Extract performance data
-            extracted_data = extract_info(result.stdout)
-            extracted_data['trace'] = trace_filename.split('.')[0]
-            extracted_data['slow_timing'] = timing
-            extracted_data['folder'] = trace_name.split('/')[1]
-            # Append extracted data to results list
-            results.append(extracted_data)
+# Pivot data for plotting
+doubleW_system_cycles = merged_data.pivot(index='trace', columns='slow_timing', values='memory_system_cycles_doubleW')
+wbshort_system_cycles = merged_data.pivot(index='trace', columns='slow_timing', values='memory_system_cycles_wbshorttrace')
+write_ratios = merged_data.pivot(index='trace', columns='slow_timing', values='avg_write_ratio')
 
-            # except subprocess.TimeoutExpired:
-            #     print(f"Simulation for {trace_filename} and slow_chip_perf = {timing} timed out. Skipping this iteration.")
+# Calculate the updated metric
+updated_ratios = (doubleW_system_cycles - wbshort_system_cycles) / wbshort_system_cycles
 
-# Convert the results to a pandas DataFrame and handle any NaN values
-df = pd.DataFrame(results).fillna('NaN')
+# Plot the updated metric and write ratios
+fig, ax1 = plt.subplots(figsize=(10, 6),dpi=150)
 
-# Save the results to CSV
-df.to_csv(output_csv, index=False)
+# Define bar width and x positions
+width = 0.35
+x = range(len(updated_ratios.index))
 
-print(f"All simulations are complete. Results saved to {output_csv}.")
+# Bar plot for the updated metric for both frequencies
+ax1.bar(
+    [i - width / 2 for i in x],
+    updated_ratios.iloc[:, 0],
+    width,
+    label=updated_ratios.columns[0],
+    color='skyblue'
+)
+ax1.bar(
+    [i + width / 2 for i in x],
+    updated_ratios.iloc[:, 1],
+    width,
+    label=updated_ratios.columns[1],
+    color='lightcoral'
+)
+
+# Configure primary y-axis (Updated Metric)
+ax1.set_ylabel('Performance Loss', color='blue')
+ax1.tick_params(axis='y', labelcolor='blue')
+ax1.set_xlabel('Trace')
+ax1.set_xticks(x)
+ax1.set_xticklabels(updated_ratios.index, rotation=45, ha='right')
+
+# Add a secondary y-axis for write ratios
+ax2 = ax1.twinx()
+ax2.plot(write_ratios.index, write_ratios.iloc[:, 0], color='orange', marker='o', label='Write Ratio - Low Frequency')
+ax2.plot(write_ratios.index, write_ratios.iloc[:, 1], color='green', marker='x', label='Write Ratio - High Frequency')
+ax2.set_ylabel('Write Operation Ratio', color='orange')
+ax2.tick_params(axis='y', labelcolor='orange')
+
+# Add legends and title
+fig.suptitle('Performance influence for more W operation')
+ax1.legend(loc='upper left', bbox_to_anchor=(0, 1))
+ax2.legend(loc='upper right', bbox_to_anchor=(1, 1))
+ax1.grid()
+# Adjust layout and show the plot
+plt.savefig('reduce w merits.png')
+plt.tight_layout()
+plt.show()

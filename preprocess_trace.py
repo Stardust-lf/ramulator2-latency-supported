@@ -43,6 +43,6 @@ def process_folder(folder_path, output_folder, max_lines=10**6):
             output_file = os.path.join(output_folder, filename)
             process_file(input_file, output_file, max_lines)
 # Example usage
-input_folder = "wb_traces"  # Replace with the path to your input folder
-output_folder = "wb_short_trace"  # Replace with the path to your output folder
+input_folder = "wt_traces"  # Replace with the path to your input folder
+output_folder = "wt_short_trace"  # Replace with the path to your output folder
 process_folder(input_folder, output_folder)

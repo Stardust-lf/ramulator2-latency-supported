@@ -1,63 +1,70 @@
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 
-# Load your data
-file_path = 'sus_pressure_results.csv'  # Replace with your file path
+# Load the data from the CSV file
+file_path = 'sus_pressure_results.csv'  # Replace with your actual file path
 data = pd.read_csv(file_path)
 
-# Filter data for only 6400 MHz
-data_6400 = data
+# Filter data for 3200 and 6400 configurations
+data_3200 = data[data['slow_timing'] == 'DDR5_3200AN']
+data_6400 = data[data['slow_timing'] == 'DDR5_6400AN']
 
-# Recalculate sorted traces and write ratio if not defined
-write_ratio_by_trace_6400 = data_6400.groupby('trace', group_keys=False).apply(
-    lambda df: df['total_num_write_requests'].sum() /
-               (df['total_num_write_requests'].sum() + df['total_num_read_requests'].sum()) * 100
+# Ensure traces are aligned between 3200 and 6400 configurations
+aligned_traces = set(data_3200['trace']).intersection(set(data_6400['trace']))
+data_3200 = data_3200[data_3200['trace'].isin(aligned_traces)]
+data_6400 = data_6400[data_6400['trace'].isin(aligned_traces)]
+
+# Calculate the performance difference ratio for each trace
+performance_diff_ratio = (
+    data_3200.groupby('trace')['memory_system_cycles'].sum()
+    - data_6400.groupby('trace')['memory_system_cycles'].sum()
+) * 100 / data_6400.groupby('trace')['memory_system_cycles'].sum()
+
+# Calculate write ratios for 3200 and 6400 configurations
+write_ratio_3200 = data_3200.groupby('trace').apply(
+    lambda x: x['total_num_write_requests'].sum() * 100 /
+              (x['total_num_write_requests'].sum() + x['total_num_read_requests'].sum())
 )
-write_ratio_sorted = write_ratio_by_trace_6400.sort_values()  # Sort write ratios
-sorted_traces = write_ratio_sorted.index
-
-# Calculate wait cycles to system cycles ratio for each trace
-wait_cycle_ratio = data_6400.groupby('trace', group_keys=False).apply(
-    lambda df: df['total_wait_cycles'].sum() / df['memory_system_cycles'].sum()
+write_ratio_6400 = data_6400.groupby('trace').apply(
+    lambda x: x['total_num_write_requests'].sum() * 100 /
+              (x['total_num_write_requests'].sum() + x['total_num_read_requests'].sum())
 )
-wait_cycle_ratio_sorted = wait_cycle_ratio.loc[sorted_traces]
 
-# Remove the last trace from the sorted traces and related data
-sorted_traces_trimmed = sorted_traces[:-1]
-write_ratio_sorted_trimmed = write_ratio_sorted[:-1]
-wait_cycle_ratio_sorted_trimmed = wait_cycle_ratio_sorted[:-1]
+# Average write ratio across 3200 and 6400 configurations
+average_write_ratio = (write_ratio_3200 + write_ratio_6400) / 2
 
-# Replace x-axis labels with Random10 ~ Random80
-random_labels = [f"Random{i}" for i in range(10, 10 * (len(sorted_traces_trimmed) + 1), 10)]
+# Sort traces by average write ratio (low to high)
+sorted_traces = average_write_ratio.sort_values().index
+sorted_performance_diff_ratio = performance_diff_ratio.reindex(sorted_traces)
+sorted_write_ratio = average_write_ratio.reindex(sorted_traces)
 
-# Plot the updated results
+# Prepare labels
+random_labels = [f"Random{i}" for i in range(10, 10 * (len(sorted_traces) + 1), 10)]
+
+# Plot the results
 fig, ax1 = plt.subplots(figsize=(6, 4), dpi=100)
 
-# Plot wait cycle to system cycle ratio as bars with log scale
-ax1.bar(random_labels, wait_cycle_ratio_sorted_trimmed, color="#FF9966", edgecolor="black", label="Wait/System Cycles")
-ax1.set_yscale('log')  # Set log scale
-ax1.set_ylabel("Performance Loss", fontsize=12, color="#ff7f0e")
-ax1.tick_params(axis='y', labelcolor="#ff7f0e")
+# Bar plot of the performance difference ratio (left y-axis)
+ax1.set_title("Pressure exp for 3200AN on 6400AN")
+ax1.bar(random_labels, sorted_performance_diff_ratio.values, color="#FF9966", label="Performance Difference Ratio")
+ax1.set_ylabel("Performance Loss(%)")
+#ax1.set_xlabel("Traces", fontsize=12)
+ax1.set_xticks(range(len(random_labels)))
+ax1.set_xticklabels([])
+ax1.set_yscale('log')  # Set y-axis to logarithmic scale
+ax1.grid()
 
 # Add a secondary y-axis for write ratio
 ax2 = ax1.twinx()
-ax2.plot(random_labels, write_ratio_sorted_trimmed, color="#1f77b4", marker='o', linestyle='--', label="Write Ratio (%)")
-ax2.set_ylabel("Write Ratio (%)", fontsize=12, color="#1f77b4")
-ax2.tick_params(axis='y', labelcolor="#1f77b4")
-
-# Set x-axis labels
-ax1.set_xlabel("Traces (Sorted by Write Ratio)", fontsize=12)
-ax1.set_xticks(range(len(random_labels)))
-ax1.set_xticklabels(random_labels, rotation=45, ha='right')
+ax2.plot(random_labels, sorted_write_ratio.values, color="blue", marker='o', label="Write Ratio (%)")
+ax2.set_ylabel("Write Ratio (%)", fontsize=10, color='blue')
+ax2.tick_params(axis='y', labelcolor='blue')
 
 # Add legends
-fig.legend(loc='upper right', bbox_to_anchor=(0.9, 0.85), fontsize=10)
+ax1.legend(loc='upper left', fontsize=10)
+ax2.legend(loc='upper right', fontsize=10)
 
-# Add grid for better readability
-ax1.grid(axis='y', linestyle='--', alpha=0.7)
-
-# Adjust layout
+# Adjust layout and save the plot
 plt.tight_layout()
-plt.savefig("Pressure_test_3200AN.png")
+plt.savefig("2-2 write pressure.png")
 plt.show()
