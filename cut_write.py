@@ -17,7 +17,7 @@ def process_file(input_file, output_file, max_lines=10**6):
             parts = line.strip().split()
             parts[0] = min(int(parts[0]),256)
             if len(parts) == 3:  # Ensure line has the correct format
-                address = int(parts[2]) % (2**64)  # Perform mod 2^64
+                address = int(parts[2]) % (2**32)  # Perform mod 2^64
 
                 outfile.write('{} {} {}\n'.format(parts[0],parts[1],address))
             else:

@@ -2,7 +2,7 @@ Frontend:
   impl: LoadStoreTrace
   clock_ratio: 8
   num_expected_insts: 1000000
-  path: final_traces/bc_twi.trace
+  path: wb_short_trace/bc_twi.trace
   Translation:
     impl: NoTranslation
     max_addr: 2147483648
