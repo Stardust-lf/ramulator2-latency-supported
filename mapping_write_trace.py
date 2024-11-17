@@ -63,7 +63,7 @@ def insert_write_requests(trace_path, output_path, block_to_addresses):
 
 def main():
     input_dir = 'wb_short_trace'
-    output_dir = 'modified_traces'
+    output_dir = 'modified_doubleW_traces'
     os.makedirs(output_dir, exist_ok=True)
 
     for trace_filename in os.listdir(input_dir):

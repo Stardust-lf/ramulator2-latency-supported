@@ -6,20 +6,32 @@ import re
 
 # Path to the configuration file, trace directory, and output CSV
 config_path = "../sus_perf_test.yaml"
-trace_dir = "../processed_traces/"
-output_csv = 'sus_double_results.csv'
+trace_dir = "../modified_doubleW_traces/"
+baseline_trace_dir = "../wb_short_trace/"
+output_csv = 'sus_doubleW_wb_results.csv'
+# slow_chip_timings = [
+#     "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
+#     # "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
+#     # "DDR5_4000BN", "DDR5_4000AN", "DDR5_4000C",
+#     # "DDR5_4400BN", "DDR5_4400AN", "DDR5_4400C",
+#     # "DDR5_4800BN", "DDR5_4800AN", "DDR5_4800C",
+#     # "DDR5_5200BN", "DDR5_5200AN", "DDR5_5200C",
+#     # "DDR5_5600BN", "DDR5_5600AN", "DDR5_5600C",
+#     # "DDR5_6000BN", "DDR5_6000AN", "DDR5_6000C",
+#     "DDR5_6400BN", "DDR5_6400AN", "DDR5_6400C"
+# ]
 slow_chip_timings = [
-    "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
-    # "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
-    # "DDR5_4000BN", "DDR5_4000AN", "DDR5_4000C",
-    # "DDR5_4400BN", "DDR5_4400AN", "DDR5_4400C",
-    # "DDR5_4800BN", "DDR5_4800AN", "DDR5_4800C",
-    # "DDR5_5200BN", "DDR5_5200AN", "DDR5_5200C",
-    # "DDR5_5600BN", "DDR5_5600AN", "DDR5_5600C",
-    # "DDR5_6000BN", "DDR5_6000AN", "DDR5_6000C",
-    "DDR5_6400BN", "DDR5_6400AN", "DDR5_6400C"
+    #"DDR5_1600AN",
+    "DDR5_3200AN",
+    #"DDR5_3600AN",
+    #"DDR5_4000AN",
+    #"DDR5_4400AN",
+    #"DDR5_4800AN",
+    #"DDR5_5200AN",
+    #"DDR5_5600AN",
+    #"DDR5_6000AN",
+    "DDR5_6400AN",
 ]
-
 def extract_info(output):
     """
     Extracts all numerical information from the simulator output string and returns it as a dictionary.
@@ -54,32 +66,35 @@ trace_files = [filename for filename in os.listdir(trace_dir)]
 # Iterate over each trace file and each slow_chip_perf value
 for trace_filename in trace_files:
     trace_path = os.path.join(trace_dir, trace_filename)
-    config['Frontend']['path'] = trace_path # Set the current trace file
+    base_trace_path = os.path.join(baseline_trace_dir, trace_filename)
+    for trace_name in [trace_path, base_trace_path]:
+        print("Running on ", trace_name.split('/')[1])
+        config['Frontend']['path'] = trace_name # Set the current trace file
 
-    for timing in slow_chip_timings:
-        print(f"Running simulation with trace {trace_filename} and slow_chip_perf = {timing}")
+        for timing in slow_chip_timings:
+            print(f"Running simulation with trace {trace_filename} and slow_chip_perf = {timing}")
 
-        # Update slow_chip_perf for this iteration
-        config['MemorySystem']["slow_timing"] = timing
+            # Update slow_chip_perf for this iteration
+            config['MemorySystem']["slow_timing"] = timing
+            config['MemorySystem']['DRAM']['timing']['preset'] = timing
+            # Save the updated configuration to a temporary file
+            temp_config_path = "../temp/temp_config.yaml"
+            with open(temp_config_path, 'w') as temp_config:
+                yaml.dump(config, temp_config)
 
-        # Save the updated configuration to a temporary file
-        temp_config_path = "../temp/temp_config.yaml"
-        with open(temp_config_path, 'w') as temp_config:
-            yaml.dump(config, temp_config)
+            # Run the simulation and capture the output with a timeout
+            result = subprocess.run(['../build/ramulator2', '-f', temp_config_path], capture_output=True, text=True)
+            #print(result.stdout)
+            # Extract performance data
+            extracted_data = extract_info(result.stdout)
+            extracted_data['trace'] = trace_filename.split('.')[0]
+            extracted_data['slow_timing'] = timing
+            extracted_data['folder'] = trace_name.split('/')[1]
+            # Append extracted data to results list
+            results.append(extracted_data)
 
-        # Run the simulation and capture the output with a timeout
-        result = subprocess.run(['../build/ramulator2', '-f', temp_config_path], capture_output=True, text=True)
-        #print(result.stdout)
-        # Extract performance data
-        extracted_data = extract_info(result.stdout)
-        extracted_data['trace'] = trace_filename.split('.')[0]
-        extracted_data['slow_timing'] = timing
-
-        # Append extracted data to results list
-        results.append(extracted_data)
-
-        # except subprocess.TimeoutExpired:
-        #     print(f"Simulation for {trace_filename} and slow_chip_perf = {timing} timed out. Skipping this iteration.")
+            # except subprocess.TimeoutExpired:
+            #     print(f"Simulation for {trace_filename} and slow_chip_perf = {timing} timed out. Skipping this iteration.")
 
 # Convert the results to a pandas DataFrame and handle any NaN values
 df = pd.DataFrame(results).fillna('NaN')
