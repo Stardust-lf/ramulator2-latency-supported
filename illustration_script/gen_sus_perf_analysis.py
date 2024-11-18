@@ -33,18 +33,34 @@ slow_chip_timings = [
 ]
 def extract_info(output):
     """
-    Extracts all numerical information from the simulator output string and returns it as a dictionary.
-    :param output: The output string from the simulator.
-    :return: A dictionary containing all the extracted information.
+    从模拟器输出中提取所有数值信息，并解决键重复的问题。
+    :param output: 模拟器的输出字符串。
+    :return: 包含提取信息的字典。
     """
     info_dict = {}
-    matches = re.findall(r"(\w+):\s*([\d.]+)", output)
-    for match in matches:
-        key, value = match
-        try:
-            info_dict[key] = float(value)
-        except ValueError:
-            info_dict[key] = None
+    key_counter = {}  # 用于记录每个键出现的次数
+
+    for line in output.splitlines():
+        # 匹配键值对
+        kv_match = re.match(r"^\s*(\w+):\s*([\d.]+|nan)", line)
+        if kv_match:
+            key, value = kv_match.groups()
+            try:
+                value = float(value) if value != "nan" else float("nan")
+            except ValueError:
+                pass  # 如果无法转换为浮点数，保持原始值
+
+            # 检查键是否重复
+            if key in info_dict or key in key_counter:
+                # 如果重复，为键添加递增的数字后缀
+                key_counter[key] = key_counter.get(key, 0) + 1
+                key = f"{key}_{key_counter[key]}"
+            else:
+                key_counter[key] = 0
+
+            # 保存键值对
+            info_dict[key] = value
+
     return info_dict
 
 # Initialize list to store results
