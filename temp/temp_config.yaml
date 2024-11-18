@@ -5,7 +5,7 @@ Frontend:
   clock_ratio: 8
   impl: LoadStoreTrace
   num_expected_insts: 1000000
-  path: ../random_traces/random_W01.trace
+  path: ../random_traces/random_W07.0.trace
 MemorySystem:
   AddrMapper:
     impl: RoBaRaCoCh

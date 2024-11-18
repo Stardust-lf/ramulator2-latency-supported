@@ -84,12 +84,12 @@ if __name__ == "__main__":
     max_address = 0xFFFFFFFF  # Maximum address
     alignment = 64  # Addresses must be aligned to 64 bytes
 
-    for write_ratio in range(1, 11):
+    for write_ratio in range(1, 21, 1):
         # Generate the trace
-        random_trace = generate_unique_address_trace(num_entries, write_ratio / 10, min_address, max_address, alignment)
+        random_trace = generate_unique_address_trace(num_entries, write_ratio / 20, min_address, max_address, alignment)
 
         # Save to a file or print
-        output_file = f"../random_traces/random_W0{write_ratio}.trace"
+        output_file = f"../random_traces/random_W0{write_ratio/2}.trace"
         with open(output_file, "w") as f:
             f.write("\n".join(random_trace))
 
