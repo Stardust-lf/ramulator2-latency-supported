@@ -6,18 +6,22 @@ import re
 
 # Path to the configuration file, trace directory, and output CSV
 config_path = "../sus_perf_test.yaml"
-trace_dir = "../final_traces/"
+trace_dir = "../wb_short_trace/"
 output_csv = 'org_perf_results.csv'
+# timings = [
+#     "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
+#     "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
+#     "DDR5_4000BN", "DDR5_4000AN", "DDR5_4000C",
+#     "DDR5_4400BN", "DDR5_4400AN", "DDR5_4400C",
+#     "DDR5_4800BN", "DDR5_4800AN", "DDR5_4800C",
+#     "DDR5_5200BN", "DDR5_5200AN", "DDR5_5200C",
+#     "DDR5_5600BN", "DDR5_5600AN", "DDR5_5600C",
+#     "DDR5_6000BN", "DDR5_6000AN", "DDR5_6000C",
+#     "DDR5_6400BN", "DDR5_6400AN", "DDR5_6400C"
+# ]
 timings = [
-    "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
-    "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
-    "DDR5_4000BN", "DDR5_4000AN", "DDR5_4000C",
-    "DDR5_4400BN", "DDR5_4400AN", "DDR5_4400C",
-    "DDR5_4800BN", "DDR5_4800AN", "DDR5_4800C",
-    "DDR5_5200BN", "DDR5_5200AN", "DDR5_5200C",
-    "DDR5_5600BN", "DDR5_5600AN", "DDR5_5600C",
-    "DDR5_6000BN", "DDR5_6000AN", "DDR5_6000C",
-    "DDR5_6400BN", "DDR5_6400AN", "DDR5_6400C"
+    "DDR5_3200AN","DDR5_3200BN","DDR5_3200C",
+    "DDR5_6400AN","DDR5_6400BN","DDR5_6400C"
 ]
 
 def extract_info(output):
