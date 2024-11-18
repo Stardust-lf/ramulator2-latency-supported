@@ -14,57 +14,53 @@ aligned_traces = set(data_3200['trace']).intersection(set(data_6400['trace']))
 data_3200 = data_3200[data_3200['trace'].isin(aligned_traces)]
 data_6400 = data_6400[data_6400['trace'].isin(aligned_traces)]
 
-# Calculate the performance difference ratio for each trace
-performance_diff_ratio = (
-    data_3200.groupby('trace')['memory_system_cycles'].sum()
-    - data_6400.groupby('trace')['memory_system_cycles'].sum()
-) * 100 / data_6400.groupby('trace')['memory_system_cycles'].sum()
+# Calculate write latencies and write queue lengths for 3200 and 6400 configurations
+write_latency_3200 = data_3200.groupby('trace')['avg_write_latency_0'].mean()
+write_latency_6400 = data_6400.groupby('trace')['avg_write_latency_0'].mean()
+write_queue_3200 = data_3200.groupby('trace')['write_queue_len_0'].mean()
+write_queue_6400 = data_6400.groupby('trace')['write_queue_len_0'].mean()
 
-# Calculate write ratios for 3200 and 6400 configurations
-write_ratio_3200 = data_3200.groupby('trace').apply(
-    lambda x: x['total_num_write_requests'].sum() * 100 /
-              (x['total_num_write_requests'].sum() + x['total_num_read_requests'].sum())
-)
-write_ratio_6400 = data_6400.groupby('trace').apply(
-    lambda x: x['total_num_write_requests'].sum() * 100 /
-              (x['total_num_write_requests'].sum() + x['total_num_read_requests'].sum())
-)
-
-# Average write ratio across 3200 and 6400 configurations
-average_write_ratio = (write_ratio_3200 + write_ratio_6400) / 2
-
-# Sort traces by average write ratio (low to high)
-sorted_traces = average_write_ratio.sort_values().index
-sorted_performance_diff_ratio = performance_diff_ratio.reindex(sorted_traces)
-sorted_write_ratio = average_write_ratio.reindex(sorted_traces)
+# Sort traces by their alignment
+sorted_traces = sorted(aligned_traces)
+sorted_write_latency_3200 = write_latency_3200.reindex(sorted_traces)
+sorted_write_latency_6400 = write_latency_6400.reindex(sorted_traces)
+sorted_write_queue_3200 = write_queue_3200.reindex(sorted_traces)
+sorted_write_queue_6400 = write_queue_6400.reindex(sorted_traces)
 
 # Prepare labels
 random_labels = [f"Random{i}" for i in range(10, 10 * (len(sorted_traces) + 1), 10)]
 
 # Plot the results
-fig, ax1 = plt.subplots(figsize=(6, 4), dpi=100)
+fig, ax1 = plt.subplots(figsize=(8, 6), dpi=120)
 
-# Bar plot of the performance difference ratio (left y-axis)
-ax1.set_title("Pressure exp for 3200AN on 6400AN")
-ax1.bar(random_labels, sorted_performance_diff_ratio.values, color="#FF9966", label="Performance Difference Ratio")
-ax1.set_ylabel("Performance Loss(%)")
-#ax1.set_xlabel("Traces", fontsize=12)
+# Plot write latencies on the left y-axis
+ax1.plot(random_labels, sorted_write_latency_3200.values, color="red", marker='o', label="Design queue latency")
+ax1.plot(random_labels, sorted_write_latency_6400.values, color="blue", marker='s', label="Baseline queue latency")
+ax1.set_ylabel("Write Latency (cycles)", fontsize=12)
+ax1.set_xlabel("Traces", fontsize=12)
 ax1.set_xticks(range(len(random_labels)))
-ax1.set_xticklabels([])
-ax1.set_yscale('log')  # Set y-axis to logarithmic scale
-ax1.grid()
+ax1.set_xticklabels(random_labels, rotation=45, ha="right")
+ax1.tick_params(axis='y', labelcolor="black")
+ax1.grid(axis='y')
 
-# Add a secondary y-axis for write ratio
+# Set y-axis limits for the first axis
+ax1.set_ylim(0, max(sorted_write_latency_3200.max(), sorted_write_latency_6400.max()) * 1.2)
+
+# Add a secondary y-axis for write queue length
 ax2 = ax1.twinx()
-ax2.plot(random_labels, sorted_write_ratio.values, color="blue", marker='o', label="Write Ratio (%)")
-ax2.set_ylabel("Write Ratio (%)", fontsize=10, color='blue')
-ax2.tick_params(axis='y', labelcolor='blue')
+ax2.plot(random_labels, sorted_write_queue_3200.values, color="green", marker='^', linestyle='--', label="Design queue length")
+ax2.plot(random_labels, sorted_write_queue_6400.values, color="purple", marker='v', linestyle='--', label="Baseline queue length")
+ax2.set_ylabel("Write Queue Length", fontsize=12)
+ax2.tick_params(axis='y', labelcolor="black")
 
-# Add legends
+# Set y-axis limits for the second axis
+ax2.set_ylim(0, max(sorted_write_queue_3200.max(), sorted_write_queue_6400.max()) * 1.2)
+
+# Add legends for both axes
 ax1.legend(loc='upper left', fontsize=10)
 ax2.legend(loc='upper right', fontsize=10)
 
 # Adjust layout and save the plot
 plt.tight_layout()
-plt.savefig("2-2 write pressure.png")
+plt.savefig("latency_and_queue_length_zero_based.png")
 plt.show()
