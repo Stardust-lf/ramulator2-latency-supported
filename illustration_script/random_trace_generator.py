@@ -1,45 +1,13 @@
 import random
-from collections import OrderedDict
 
 
-class LRUCache:
-    def __init__(self, capacity, fout):
-        self.cache = OrderedDict()
-        self.capacity = capacity
-        self.fout = fout
-
-    def get(self, address):
-        if address in self.cache:
-            self.cache.move_to_end(address)
-            return self.cache[address][0]  # 返回 dirty 状态
-        return None
-
-    def put(self, address, is_dirty, original_address, op_type, instr_count):
-        if address in self.cache:
-            # 更新 dirty 位为 True（若当前操作是写操作）
-            if is_dirty:
-                self.cache[address] = (True, original_address, op_type)
-            self.cache.move_to_end(address)
-        else:
-            # 如果缓存满了，移除最近最少使用的缓存行
-            if len(self.cache) >= self.capacity:
-                evict_address, (evict_dirty, evict_original_address, evict_op_type) = self.cache.popitem(last=False)
-                # 若被驱逐的缓存行是脏的，写回文件
-                if evict_dirty:
-                    self.fout.write(f'{instr_count} {evict_op_type} {evict_original_address}\n')
-                    return evict_op_type  # 返回写回文件的操作类型
-            # 将新地址加入缓存并设置脏位状态
-            self.cache[address] = (is_dirty, original_address, op_type)
-            return op_type  # 返回新写入的操作类型
-
-
-def generate_unique_address_trace(num_entries, write_ratio, min_address, max_address, alignment):
+def generate_ordered_address_trace(num_entries, rw_ratio, min_address, max_address, alignment):
     """
-    Generates a trace where every address is unique, ensuring all accesses are cache misses.
+    Generates a trace with a specific RW ratio and orderly pattern.
 
     Args:
         num_entries (int): Total number of trace entries to generate.
-        write_ratio (float): Ratio of write (W) operations to total operations (0 to 1).
+        rw_ratio (tuple): Ratio of reads to writes (e.g., (2, 1) for RRW).
         min_address (int): Minimum address (inclusive) for generated addresses.
         max_address (int): Maximum address (inclusive) for generated addresses.
         alignment (int): Required alignment for the generated addresses.
@@ -47,31 +15,45 @@ def generate_unique_address_trace(num_entries, write_ratio, min_address, max_add
     Returns:
         list: List of trace strings in the required format.
     """
+    read_ratio, write_ratio = rw_ratio
+    ratio_sum = read_ratio + write_ratio
+
+    # Adjust num_entries if it is not divisible by the RW ratio sum
+    if num_entries % ratio_sum != 0:
+        adjusted_entries = (num_entries // ratio_sum) * ratio_sum
+        print(f"Adjusted num_entries from {num_entries} to {adjusted_entries} to match the RW ratio.")
+        num_entries = adjusted_entries
+
     trace = []
-    unique_addresses = set()
-    address_space = range(
-        (min_address + alignment - 1) // alignment, max_address // alignment
-    )
+    total_read = num_entries * read_ratio // ratio_sum
+    total_write = num_entries - total_read
 
-    if len(address_space) < num_entries:
-        raise ValueError("Not enough unique addresses in the specified range for the given number of entries.")
+    # Generate sequential addresses for reads and writes
+    read_addresses = [
+        addr * alignment for addr in range(
+            (min_address + alignment - 1) // alignment,
+            (min_address + alignment - 1) // alignment + total_read,
+        )
+    ]
+    write_addresses = [
+        addr * alignment for addr in range(
+            (min_address + alignment - 1) // alignment + total_read,
+            (min_address + alignment - 1) // alignment + total_read + total_write,
+        )
+    ]
 
-    for _ in range(num_entries):
-        # Randomly select operation type based on the write ratio
-        operation = "W" if random.random() < write_ratio else "R"
-
-        # Generate a unique aligned address
-        while True:
-            address = random.choice(address_space) * alignment
-            if address not in unique_addresses:
-                unique_addresses.add(address)
-                break
-
-        # Generate a random prefix (e.g., 1024 or 5 for W)
-        prefix = random.randint(1, 20)
-
-        # Append the trace entry
-        trace.append(f"{prefix} {operation} {address}")
+    # Interleave addresses based on the RW ratio
+    read_count, write_count = 0, 0
+    pattern_length = ratio_sum
+    for _ in range(num_entries // pattern_length):
+        trace.extend(
+            [f"0 R {read_addresses[read_count + i]}" for i in range(read_ratio)]
+        )
+        read_count += read_ratio
+        trace.extend(
+            [f"0 W {write_addresses[write_count + i]}" for i in range(write_ratio)]
+        )
+        write_count += write_ratio
 
     return trace
 
@@ -79,18 +61,22 @@ def generate_unique_address_trace(num_entries, write_ratio, min_address, max_add
 if __name__ == "__main__":
     # Parameters
     num_entries = 1000000  # Total number of trace entries to generate
-    write_ratio = 0.4  # 40% of operations will be writes
     min_address = 0x10000000  # Minimum address
     max_address = 0xFFFFFFFF  # Maximum address
     alignment = 64  # Addresses must be aligned to 64 bytes
 
-    for write_ratio in range(1, 21, 1):
+    # Iterate through RW ratios from 9:1 to 1:9
+    for read_ratio in range(9, 0, -1):
+        write_ratio = 10 - read_ratio
+        rw_ratio = (read_ratio, write_ratio)
+        print(f"Generating trace for R:W = {read_ratio}:{write_ratio}")
+
         # Generate the trace
-        random_trace = generate_unique_address_trace(num_entries, write_ratio / 20, min_address, max_address, alignment)
+        ordered_trace = generate_ordered_address_trace(num_entries, rw_ratio, min_address, max_address, alignment)
 
-        # Save to a file or print
-        output_file = f"../random_traces/random_W0{write_ratio/2}.trace"
+        # Save to a file
+        output_file = f"../ordered_traces/RW{read_ratio}_{write_ratio}.trace"
         with open(output_file, "w") as f:
-            f.write("\n".join(random_trace))
+            f.write("\n".join(ordered_trace))
 
-        print(f"Random trace with {num_entries} entries generated and saved to {output_file}!")
+        print(f"Ordered trace for R:W = {read_ratio}:{write_ratio} saved to {output_file}!")

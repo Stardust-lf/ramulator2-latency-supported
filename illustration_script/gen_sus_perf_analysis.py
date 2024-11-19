@@ -32,11 +32,6 @@ slow_chip_timings = [
     "DDR5_6400AN",
 ]
 def extract_info(output):
-    """
-    从模拟器输出中提取所有数值信息，并解决键重复的问题。
-    :param output: 模拟器的输出字符串。
-    :return: 包含提取信息的字典。
-    """
     info_dict = {}
     key_counter = {}  # 用于记录每个键出现的次数
 
