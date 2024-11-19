@@ -60,13 +60,13 @@ def generate_ordered_address_trace(num_entries, rw_ratio, min_address, max_addre
 
 if __name__ == "__main__":
     # Parameters
-    num_entries = 1000000  # Total number of trace entries to generate
+    num_entries = 100000  # Total number of trace entries to generate
     min_address = 0x10000000  # Minimum address
     max_address = 0xFFFFFFFF  # Maximum address
     alignment = 64  # Addresses must be aligned to 64 bytes
 
     # Iterate through RW ratios from 9:1 to 1:9
-    for read_ratio in range(9, 0, -1):
+    for read_ratio in [10,0,5]:
         write_ratio = 10 - read_ratio
         rw_ratio = (read_ratio, write_ratio)
         print(f"Generating trace for R:W = {read_ratio}:{write_ratio}")

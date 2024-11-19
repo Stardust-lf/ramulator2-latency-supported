@@ -89,7 +89,8 @@ for trace_filename in trace_files:
         # Extract performance data
         extracted_data = extract_info(result.stdout)
         extracted_data['trace'] = trace_filename.split('.')[0]
-        extracted_data['slow_timing'] = timing
+        config['MemorySystem']["slow_timing"] = timing
+        config['MemorySystem']['DRAM']['timing']['preset'] = timing
 
         # Append extracted data to results list
         results.append(extracted_data)
