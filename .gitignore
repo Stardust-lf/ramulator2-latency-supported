@@ -7,3 +7,6 @@ autobuild.sh
 /ctraces
 *.ctrace
 *.trace
+*.jpg
+*.png
+

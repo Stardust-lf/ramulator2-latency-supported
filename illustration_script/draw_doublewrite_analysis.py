@@ -1,81 +1,105 @@
+from pydoc import locate
+
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+plt.rcParams['font.family'] = 'Arial'
 
-# Load the uploaded CSV file
-file_path = 'sus_doubleW_wb_results.csv'
+# Load the data from the first CSV file
+file_path = 'doubleW_analysis.csv'  # Replace with the correct file path
 data = pd.read_csv(file_path)
 
-# Filter data for the two folders: doubleW and wbshorttrace
-doubleW_data = data[data['folder'] == 'modified_doubleW_traces']
-wbshorttrace_data = data[data['folder'] == 'wb_short_trace']
+# Load the data from the second CSV file
+file_path_2 = 'sus_partial_wb_results.csv'  # Replace with the correct file path
+data_3200 = pd.read_csv(file_path_2)
 
-# Merge the datasets on 'trace' and 'slow_timing' to align the corresponding traces and frequencies
-merged_data = pd.merge(doubleW_data, wbshorttrace_data, on=['trace', 'slow_timing'], suffixes=('_doubleW', '_wbshorttrace'))
-
-# Calculate write ratios
-merged_data['write_ratio_doubleW'] = (
-    merged_data['total_num_write_requests_doubleW'] /
-    (merged_data['total_num_write_requests_doubleW'] + merged_data['total_num_read_requests_doubleW'])
-)
-merged_data['write_ratio_wbshorttrace'] = (
-    merged_data['total_num_write_requests_wbshorttrace'] /
-    (merged_data['total_num_write_requests_wbshorttrace'] + merged_data['total_num_read_requests_wbshorttrace'])
+# Filter the 3200 system_cycles data
+data_3200_filtered = data_3200[data_3200['slow_timing'] == 'DDR5_3200AN'][['trace', 'memory_system_cycles', 'total_wait_cycles']].rename(
+    columns={'memory_system_cycles': 'system_cycles_3200', 'total_wait_cycles': 'wait_cycles_3200'}
 )
 
-# Calculate average write ratio
-merged_data['avg_write_ratio'] = (merged_data['write_ratio_doubleW'] + merged_data['write_ratio_wbshorttrace']) / 2
+# Merge the two datasets on trace
+merged_data = pd.merge(data, data_3200_filtered, on='trace')
 
-# Pivot data for plotting
-doubleW_system_cycles = merged_data.pivot(index='trace', columns='slow_timing', values='memory_system_cycles_doubleW')
-wbshort_system_cycles = merged_data.pivot(index='trace', columns='slow_timing', values='memory_system_cycles_wbshorttrace')
-write_ratios = merged_data.pivot(index='trace', columns='slow_timing', values='avg_write_ratio')
+# Calculate the normalization base: wb_tag=0 system_cycles for each trace
+base_cycles = merged_data[merged_data['dw_tag'] == 0].set_index('trace')['memory_system_cycles']
 
-# Calculate the updated metric
-updated_ratios = (doubleW_system_cycles - wbshort_system_cycles) / wbshort_system_cycles
-
-# Plot the updated metric and write ratios
-fig, ax1 = plt.subplots(figsize=(10, 6),dpi=150)
-
-# Define bar width and x positions
-width = 0.35
-x = range(len(updated_ratios.index))
-
-# Bar plot for the updated metric for both frequencies
-ax1.bar(
-    [i - width / 2 for i in x],
-    updated_ratios.iloc[:, 0],
-    width,
-    label=updated_ratios.columns[0],
-    color='skyblue'
+# Add normalized columns for wb_tag=0, wb_tag=1, and 3200 (inverted)
+merged_data['inverted_wb_tag_0'] = merged_data.apply(
+    lambda row: base_cycles[row['trace']] / base_cycles[row['trace']]
+    if row['trace'] in base_cycles else None,
+    axis=1
 )
-ax1.bar(
-    [i + width / 2 for i in x],
-    updated_ratios.iloc[:, 1],
-    width,
-    label=updated_ratios.columns[1],
-    color='lightcoral'
+merged_data['inverted_wb_tag_1'] = merged_data.apply(
+    lambda row: base_cycles[row['trace']] / row['memory_system_cycles']
+    if row['trace'] in base_cycles and row['dw_tag'] == 1 else None,
+    axis=1
+)
+merged_data['inverted_3200'] = merged_data.apply(
+    lambda row: base_cycles[row['trace']] / (base_cycles[row['trace']] + row['wait_cycles_3200'])
+    if row['trace'] in base_cycles and not pd.isna(row['wait_cycles_3200']) else None,
+    axis=1
 )
 
-# Configure primary y-axis (Updated Metric)
-ax1.set_ylabel('Performance Loss', color='blue')
-ax1.tick_params(axis='y', labelcolor='blue')
-ax1.set_xlabel('Trace')
-ax1.set_xticks(x)
-ax1.set_xticklabels(updated_ratios.index, rotation=45, ha='right')
+# Pivot the data for plotting
+pivot_data = pd.DataFrame({
+    'wb_tag_0': merged_data.groupby('trace')['inverted_wb_tag_0'].first(),
+    'wb_tag_1': merged_data.groupby('trace')['inverted_wb_tag_1'].first(),
+    'adjusted_3200': merged_data.groupby('trace')['inverted_3200'].first()
+})
 
-# Add a secondary y-axis for write ratios
-ax2 = ax1.twinx()
-ax2.plot(write_ratios.index, write_ratios.iloc[:, 0], color='orange', marker='o', label='Write Ratio - Low Frequency')
-ax2.plot(write_ratios.index, write_ratios.iloc[:, 1], color='green', marker='x', label='Write Ratio - High Frequency')
-ax2.set_ylabel('Write Operation Ratio', color='orange')
-ax2.tick_params(axis='y', labelcolor='orange')
+# Define the x positions and bar width
+x_positions = np.arange(len(pivot_data))
+bar_width = 0.25
 
-# Add legends and title
-fig.suptitle('Performance influence for more W operation')
-ax1.legend(loc='upper left', bbox_to_anchor=(0, 1))
-ax2.legend(loc='upper right', bbox_to_anchor=(1, 1))
-ax1.grid()
-# Adjust layout and show the plot
-plt.savefig('reduce w merits.png')
+# Plotting
+fig, ax = plt.subplots(figsize=(12, 4), dpi=150)
+import matplotlib.cm as cm
+color_palette = cm.get_cmap('OrRd', 256)  # Get a colormap with fine granularity
+colors = color_palette(np.linspace(0.4, 0.8, 3))  # Focus on the middle range
+
+# Bar for wb_tag=1
+ax.bar(
+    x_positions - bar_width,
+    pivot_data['wb_tag_1']/ pivot_data['wb_tag_1'],
+    width=bar_width,
+    label='Baseline',
+    color=colors[1]
+)
+
+# Bar for wb_tag=0
+ax.bar(
+    x_positions,
+    pivot_data['wb_tag_0'] / pivot_data['wb_tag_1'],
+    width=bar_width,
+    label='Ideal',
+    color=colors[0]
+)
+
+
+
+# Bar for 3200 system_cycles
+ax.bar(
+    x_positions + bar_width,
+    pivot_data['adjusted_3200']/ pivot_data['wb_tag_1'],
+    width=bar_width,
+    label='Our design',
+    color=colors[2]
+)
+
+# Add labels and legend
+#ax.set_xlabel('Trace', fontsize=14)
+ax.set_ylabel('Normalized Performance', fontsize=14)
+#ax.set_title('Inverted Normalized System Cycles by Trace with Adjusted 3200 Timing', fontsize=16)
+ax.set_xticks(x_positions)
+ax.set_xticklabels(pivot_data.index, rotation=45, ha='right')
+ax.legend(loc = "lower right")
+ax.grid(axis='y', linestyle='--', alpha=0.7)
+
+# Set Y-axis limit
+ax.set_ylim(0.5, None)
+
+# Adjust layout and display the plot
 plt.tight_layout()
+plt.savefig("2-4 reduce w merits-WB.png")
 plt.show()
