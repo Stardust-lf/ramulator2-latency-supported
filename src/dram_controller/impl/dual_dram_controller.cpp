@@ -174,6 +174,10 @@ class DualDRAMController final : public IDRAMController, public Implementation {
     void empty_tick() override{
       m_clk ++;
       m_refresh->tick();
+      s_queue_len += m_read_buffer.size() + m_write_buffer.size() + m_priority_buffer.size() + pending.size();
+      s_read_queue_len += m_read_buffer.size();
+      s_write_queue_len += m_write_buffer.size();
+      s_priority_queue_len += m_priority_buffer.size();
       set_write_mode();
     }
 
@@ -182,7 +186,7 @@ class DualDRAMController final : public IDRAMController, public Implementation {
 
       // Update statistics
       s_queue_len += m_read_buffer.size() + m_write_buffer.size() + m_priority_buffer.size() + pending.size();
-      s_read_queue_len += m_read_buffer.size() + pending.size();
+      s_read_queue_len += m_read_buffer.size();
       s_write_queue_len += m_write_buffer.size();
       s_priority_queue_len += m_priority_buffer.size();
 

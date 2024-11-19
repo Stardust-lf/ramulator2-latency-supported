@@ -53,8 +53,8 @@ trace_files = [f for f in os.listdir(trace_dir) if f.endswith('.trace')]
 for trace_filename in trace_files:
     trace_path = os.path.join(trace_dir, trace_filename)
     config['Frontend']['path'] = trace_path  # Set the current trace file
-
-    timing = "DDR5_6400C_BL"
+    #
+    timing = "DDR5_6400AN_BL"
     org = "DDR5_baseline2"
     print(f"Running simulation with trace {trace_filename} and timing = {timing} with org = {org}")
     config['MemorySystem']["slow_timing"] = timing
@@ -73,7 +73,7 @@ for trace_filename in trace_files:
 
 
     for timing in timings:
-        for org in ["DDR5_baseline1", "DDR5_design1", "DDR5_design2"]:
+        for org in ["DDR5_ideal","DDR5_baseline1", "DDR5_design1", "DDR5_design2"]:
             print(f"Running simulation with trace {trace_filename} and timing = {timing} with org = {org}")
 
             # Update slow_chip_perf for this iteration
@@ -87,13 +87,12 @@ for trace_filename in trace_files:
 
             # Run the simulation and capture the output with a timeout
             result = subprocess.run(['../build/ramulator2', '-f', temp_config_path], capture_output=True, text=True)
-            #print(result.stdout)
             extracted_data = extract_info(result.stdout)
             extracted_data['trace'] = trace_filename.split('.')[0]
             extracted_data['timing'] = timing
             extracted_data['organization'] = org
             results.append(extracted_data)
-
+            #print(result.stdout)
 
 
 # Convert the results to a pandas DataFrame and handle any NaN values
