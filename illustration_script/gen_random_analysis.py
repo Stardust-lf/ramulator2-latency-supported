@@ -10,7 +10,7 @@ trace_dir = "../ordered_traces/"
 output_csv = 'sus_ordered_pressure_results_5.csv'
 slow_chip_timings = [
     #"DDR5_3200BN",
-    "DDR5_3200AN",
+    #"DDR5_3200AN",
     #"DDR5_3200C",
     #"DDR5_3600BN",
     #"DDR5_3600AN",
@@ -22,6 +22,7 @@ slow_chip_timings = [
     # "DDR5_5600BN", "DDR5_5600AN", "DDR5_5600C",
     # "DDR5_6000BN", "DDR5_6000AN", "DDR5_6000C",
     #"DDR5_6400BN", "DDR5_6400AN", "DDR5_6400C"
+    "DDR5_4800AN"
     "DDR5_6400AN"
 ]
 
