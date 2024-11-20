@@ -63,7 +63,7 @@ def calculate_write_proportion(trace_file):
 results = []
 
 # Configuration
-write_threshold = 6
+write_threshold = 12
 trace_folder = "../wb_short_trace"
 read_speed_data = pd.read_csv('sus_Rtrace_results.csv')
 write_speed_data = pd.read_csv('sus_Wtrace_results.csv')
