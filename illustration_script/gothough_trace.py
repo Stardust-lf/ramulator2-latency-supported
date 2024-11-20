@@ -59,54 +59,56 @@ def calculate_write_proportion(trace_file):
         return write_operations / total_operations
     return 0.0
 
-# Initialize results storage
-results = []
+# Initialize results storage for different write thresholds
+all_results = []
 
 # Configuration
-write_threshold = 12
+write_thresholds = [6, 12, 24, 48]
 trace_folder = "../wb_short_trace"
 read_speed_data = pd.read_csv('sus_Rtrace_results.csv')
 write_speed_data = pd.read_csv('sus_Wtrace_results.csv')
 slow_chips = ["DDR5_1600AN", "DDR5_3200AN", "DDR5_6400AN"]
 
-# Process traces
-for slow_chip in slow_chips:
-    for trace_file in os.listdir(trace_folder):
-        if not trace_file.endswith(".trace"):
-            continue
+# Process traces for each threshold
+for write_threshold in write_thresholds:
+    for slow_chip in slow_chips:
+        for trace_file in os.listdir(trace_folder):
+            if not trace_file.endswith(".trace"):
+                continue
 
-        trace_path = os.path.join(trace_folder, trace_file)
-        trace_name = trace_file.split('.')[0]
+            trace_path = os.path.join(trace_folder, trace_file)
+            trace_name = trace_file.split('.')[0]
 
-        # Calculate costs
-        fast_read_cost = calculate_cost(read_speed_data, trace_name, "DDR5_6400AN", "read")
-        fast_write_cost = calculate_cost(write_speed_data, trace_name, "DDR5_6400AN", "read")
-        slow_write_cost = calculate_cost(write_speed_data, trace_name, slow_chip, "read")
-        total_system_cycles_6400 = get_total_system_cycles(write_speed_data, trace_name, "DDR5_6400AN")
-        write_proportion = calculate_write_proportion(trace_path)
+            # Calculate costs
+            fast_read_cost = calculate_cost(read_speed_data, trace_name, "DDR5_6400AN", "read")
+            fast_write_cost = calculate_cost(write_speed_data, trace_name, "DDR5_6400AN", "read")
+            slow_write_cost = calculate_cost(write_speed_data, trace_name, slow_chip, "read")
+            total_system_cycles_6400 = get_total_system_cycles(write_speed_data, trace_name, "DDR5_6400AN")
+            write_proportion = calculate_write_proportion(trace_path)
 
-        # Analyze costs
-        if fast_read_cost is not None and fast_write_cost is not None and slow_write_cost is not None:
-            r_count = count_reads_between_writes(trace_path, write_threshold)
-            cost_sum = np.sum([
-                max(write_threshold * (slow_write_cost - fast_write_cost) - i * fast_read_cost, 0) for i in r_count
-            ])
-            normalized_cost = cost_sum / total_system_cycles_6400 if total_system_cycles_6400 else None
-        else:
-            normalized_cost = None
+            # Analyze costs
+            if fast_read_cost is not None and fast_write_cost is not None and slow_write_cost is not None:
+                r_count = count_reads_between_writes(trace_path, write_threshold)
+                cost_sum = np.sum([
+                    max(write_threshold * (slow_write_cost - fast_write_cost) - i * fast_read_cost, 0) for i in r_count
+                ])
+                normalized_cost = cost_sum / total_system_cycles_6400 if total_system_cycles_6400 else None
+            else:
+                normalized_cost = None
 
-        # Collect results
-        results.append({
-            "Trace Name": trace_name,
-            "Slow Chip": slow_chip,
-            "Fast Read Cost": fast_read_cost,
-            "Fast Write Cost": fast_write_cost,
-            "Slow Write Cost": slow_write_cost,
-            "Write Proportion": write_proportion,
-            "Normalized Cost (%)": 100 * normalized_cost if normalized_cost is not None else None
-        })
+            # Collect results
+            all_results.append({
+                "Write Threshold": write_threshold,
+                "Trace Name": trace_name,
+                "Slow Chip": slow_chip,
+                "Fast Read Cost": fast_read_cost,
+                "Fast Write Cost": fast_write_cost,
+                "Slow Write Cost": slow_write_cost,
+                "Write Proportion": write_proportion,
+                "Normalized Cost (%)": 100 * normalized_cost if normalized_cost is not None else None
+            })
 
 # Save results to CSV
-results_df = pd.DataFrame(results)
-output_file = "avg_latency_results.csv"
-results_df.to_csv(output_file, index=False)
+all_results_df = pd.DataFrame(all_results)
+output_file = "avg_latency_results_multiple_thresholds.csv"
+all_results_df.to_csv(output_file, index=False)
