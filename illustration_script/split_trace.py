@@ -29,7 +29,6 @@ def split_trace_folder(input_folder, output_folder_r, output_folder_w):
 
         # Process the file
         with open(input_file_path, "r") as infile, \
-                open(output_file_r, "w") as outfile_r, \
                 open(output_file_w, "w") as outfile_w:
 
             for line in infile:
@@ -38,9 +37,7 @@ def split_trace_folder(input_folder, output_folder_r, output_folder_w):
                     continue  # Skip malformed lines
 
                 operation = parts[1]
-                if operation == "R":
-                    outfile_r.write(line)
-                elif operation == "W":
+                if operation == "W":
                     # Set the first number to 0
                     parts[0] = "0"
                     parts[1] = 'R'
