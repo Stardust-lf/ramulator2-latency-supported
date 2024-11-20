@@ -6,25 +6,31 @@ import re
 
 # Path to the configuration file, trace directory, and output CSV
 config_path = "../sus_perf_test.yaml"
-trace_dir = "../ordered_traces/"
-output_csv = 'sus_ordered_pressure_results_5.csv'
+trace_dir = "../wb_traces_R/"
+output_csv = 'sus_Rtrace_results.csv'
+# slow_chip_timings = [
+#     "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
+#     "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
+#     "DDR5_4000BN", "DDR5_4000AN", "DDR5_4000C",
+#     "DDR5_4400BN", "DDR5_4400AN", "DDR5_4400C",
+#     "DDR5_4800BN", "DDR5_4800AN", "DDR5_4800C",
+#     "DDR5_5200BN", "DDR5_5200AN", "DDR5_5200C",
+#     "DDR5_5600BN", "DDR5_5600AN", "DDR5_5600C",
+#     "DDR5_6000BN", "DDR5_6000AN", "DDR5_6000C",
+#     "DDR5_6400BN", "DDR5_6400AN", "DDR5_6400C"
+# ]
 slow_chip_timings = [
-    #"DDR5_3200BN",
+    "DDR5_1600AN",
     "DDR5_3200AN",
-    #"DDR5_3200C",
-    #"DDR5_3600BN",
     #"DDR5_3600AN",
-    # "DDR5_3600C",
-    # "DDR5_4000BN", "DDR5_4000AN", "DDR5_4000C",
-    # "DDR5_4400BN", "DDR5_4400AN", "DDR5_4400C",
-    # "DDR5_4800BN", "DDR5_4800AN", "DDR5_4800C",
-    # "DDR5_5200BN", "DDR5_5200AN", "DDR5_5200C",
-    # "DDR5_5600BN", "DDR5_5600AN", "DDR5_5600C",
-    # "DDR5_6000BN", "DDR5_6000AN", "DDR5_6000C",
-    #"DDR5_6400BN", "DDR5_6400AN", "DDR5_6400C"
-    "DDR5_6400AN"
+    #"DDR5_4000AN",
+    #"DDR5_4400AN",
+    "DDR5_4800AN",
+    #"DDR5_5200AN",
+    #"DDR5_5600AN",
+    #"DDR5_6000AN",
+    "DDR5_6400AN",
 ]
-
 def extract_info(output):
     info_dict = {}
     key_counter = {}  # 用于记录每个键出现的次数
@@ -67,6 +73,7 @@ print(config)
 # trace_files = ["bfs_twi.trace","bfs_web.trace","bfs_road.trace"
 #                "bc_road.trace","cc_road.trace","pr_road.trace"]
 trace_files = [filename for filename in os.listdir(trace_dir)]
+print(trace_files)
 # Iterate over each trace file and each slow_chip_perf value
 for trace_filename in trace_files:
     trace_path = os.path.join(trace_dir, trace_filename)
@@ -89,11 +96,11 @@ for trace_filename in trace_files:
         # Extract performance data
         extracted_data = extract_info(result.stdout)
         extracted_data['trace'] = trace_filename.split('.')[0]
-        extracted_data['timing'] = timing
+        extracted_data['slow_timing'] = timing
 
         # Append extracted data to results list
         results.append(extracted_data)
-
+        #print(result.stdout)
         # except subprocess.TimeoutExpired:
         #     print(f"Simulation for {trace_filename} and slow_chip_perf = {timing} timed out. Skipping this iteration.")
 
