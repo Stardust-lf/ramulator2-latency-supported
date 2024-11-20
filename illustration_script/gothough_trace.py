@@ -1,17 +1,8 @@
 import pandas as pd
 import numpy as np
 import os
+
 def count_reads_between_writes(trace_file, write_threshold=24):
-    """
-    Counts the number of 'R' operations between every 'write_threshold' (e.g., 24) 'W' operations.
-
-    Args:
-        trace_file (str): Path to the input trace file.
-        write_threshold (int): Number of 'W' operations to trigger a read count record.
-
-    Returns:
-        list: Counts of 'R' operations between every 'write_threshold' 'W' operations.
-    """
     read_count = 0
     write_count = 0
     results = []
@@ -20,7 +11,7 @@ def count_reads_between_writes(trace_file, write_threshold=24):
         for line in infile:
             parts = line.split()
             if len(parts) < 2:
-                continue  # Skip malformed lines
+                continue
 
             operation = parts[1]
             if operation == "R":
@@ -28,61 +19,58 @@ def count_reads_between_writes(trace_file, write_threshold=24):
             elif operation == "W":
                 write_count += 1
 
-            # Every time we reach the write_threshold, record the read count and reset
             if write_count == write_threshold:
                 results.append(read_count)
-                read_count = 0  # Reset read count
-                write_count = 0  # Reset write count
+                read_count = 0
+                write_count = 0
 
     return results
 
 def calculate_cost(data, trace_name, timing, request_type):
-    """
-    Calculate the average cost for a given trace, timing, and request type.
-
-    Args:
-        data (pd.DataFrame): DataFrame containing the performance data.
-        trace_name (str): The name of the trace to filter.
-        timing (str): The timing configuration to filter (e.g., DDR5_6400AN).
-        request_type (str): Request type ('read' or 'write').
-
-    Returns:
-        int: The average cost as an integer, or None if no data is found.
-    """
-    column_requests = f"total_num_read_requests"  # Assuming this column applies to both read and write
+    column_requests = f"total_num_read_requests"
     filtered_data = data[(data['slow_timing'] == timing) & (data['trace'] == trace_name)]
 
     if not filtered_data.empty:
-        # Compute average cost and convert to int
         average_cost = (filtered_data["memory_system_cycles"] / filtered_data[column_requests]).sum()
         return int(average_cost)
     return None
 
 def get_total_system_cycles(data, trace_name, timing):
-    """
-    Get the total system cycles for a given trace and timing.
-
-    Args:
-        data (pd.DataFrame): DataFrame containing the performance data.
-        trace_name (str): The name of the trace to filter.
-        timing (str): The timing configuration to filter (e.g., DDR5_6400AN).
-
-    Returns:
-        int: Total system cycles, or None if no data is found.
-    """
     filtered_data = data[(data['slow_timing'] == timing) & (data['trace'] == trace_name)]
     if not filtered_data.empty:
         return filtered_data["memory_system_cycles"].sum()
     return None
 
-if __name__ == "__main__":
-    write_threshold = 2
-    # Define paths
-    trace_folder = "../memory_intensive_traces"  # Folder containing trace files
-    read_speed_data = pd.read_csv('sus_Rtrace_results.csv')
-    write_speed_data = pd.read_csv('sus_Wtrace_results.csv')
+def calculate_write_proportion(trace_file):
+    total_operations = 0
+    write_operations = 0
 
-    # Iterate through all .trace files in the folder
+    with open(trace_file, "r") as infile:
+        for line in infile:
+            parts = line.split()
+            if len(parts) < 2:
+                continue
+
+            total_operations += 1
+            if parts[1] == "W":
+                write_operations += 1
+
+    if total_operations > 0:
+        return write_operations / total_operations
+    return 0.0
+
+# Initialize results storage
+results = []
+
+# Configuration
+write_threshold = 6
+trace_folder = "../wb_short_trace"
+read_speed_data = pd.read_csv('sus_Rtrace_results.csv')
+write_speed_data = pd.read_csv('sus_Wtrace_results.csv')
+slow_chips = ["DDR5_1600AN", "DDR5_3200AN", "DDR5_6400AN"]
+
+# Process traces
+for slow_chip in slow_chips:
     for trace_file in os.listdir(trace_folder):
         if not trace_file.endswith(".trace"):
             continue
@@ -92,33 +80,33 @@ if __name__ == "__main__":
 
         # Calculate costs
         fast_read_cost = calculate_cost(read_speed_data, trace_name, "DDR5_6400AN", "read")
-        slow_read_cost = calculate_cost(read_speed_data, trace_name, "DDR5_1600AN", "read")
-        fast_write_cost = calculate_cost(write_speed_data, trace_name, "DDR5_6400AN", "write")
-        slow_write_cost = calculate_cost(write_speed_data, trace_name, "DDR5_1600AN", "write")
-
-        # Get total system cycles for DDR5_6400AN
+        fast_write_cost = calculate_cost(write_speed_data, trace_name, "DDR5_6400AN", "read")
+        slow_write_cost = calculate_cost(write_speed_data, trace_name, slow_chip, "read")
         total_system_cycles_6400 = get_total_system_cycles(write_speed_data, trace_name, "DDR5_6400AN")
+        write_proportion = calculate_write_proportion(trace_path)
 
-        # Print results
-        print(f"Trace Name: {trace_name}")
-        print(f"Fast Read Cost: {fast_read_cost if fast_read_cost is not None else 'No data found'}")
-        print(f"Slow Read Cost: {slow_read_cost if slow_read_cost is not None else 'No data found'}")
-        print(f"Fast Write Cost: {fast_write_cost if fast_write_cost is not None else 'No data found'}")
-        print(f"Slow Write Cost: {slow_write_cost if slow_write_cost is not None else 'No data found'}")
-
+        # Analyze costs
         if fast_read_cost is not None and fast_write_cost is not None and slow_write_cost is not None:
-            r_count = count_reads_between_writes(trace_path,write_threshold)
-            #print(r_count)
+            r_count = count_reads_between_writes(trace_path, write_threshold)
             cost_sum = np.sum([
                 max(write_threshold * (slow_write_cost - fast_write_cost) - i * fast_read_cost, 0) for i in r_count
             ])
-
-            if total_system_cycles_6400:
-                normalized_cost = cost_sum / total_system_cycles_6400
-                print(f"Normalized Cost for {trace_name}: {normalized_cost:.6f}")
-            else:
-                print(f"Total system cycles for DDR5_6400AN not found for {trace_name}.")
+            normalized_cost = cost_sum / total_system_cycles_6400 if total_system_cycles_6400 else None
         else:
-            print(f"Insufficient data to calculate cost for {trace_name}.")
+            normalized_cost = None
 
-        print("-" * 40)  # Separator for better readability
+        # Collect results
+        results.append({
+            "Trace Name": trace_name,
+            "Slow Chip": slow_chip,
+            "Fast Read Cost": fast_read_cost,
+            "Fast Write Cost": fast_write_cost,
+            "Slow Write Cost": slow_write_cost,
+            "Write Proportion": write_proportion,
+            "Normalized Cost (%)": 100 * normalized_cost if normalized_cost is not None else None
+        })
+
+# Save results to CSV
+results_df = pd.DataFrame(results)
+output_file = "avg_latency_results.csv"
+results_df.to_csv(output_file, index=False)

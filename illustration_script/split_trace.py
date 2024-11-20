@@ -17,9 +17,9 @@ def split_trace_folder(input_folder, output_folder_r, output_folder_w):
 
     # Iterate through all files in the input folder
     for filename in os.listdir(input_folder):
-        if "_" in filename:
-            print(f"Skipping file with underscore: {filename}")
-            continue
+        # if "_" in filename:
+        #     print(f"Skipping file with underscore: {filename}")
+        #     continue
         input_file_path = os.path.join(input_folder, filename)
 
         # Skip non-files
@@ -41,13 +41,14 @@ def split_trace_folder(input_folder, output_folder_r, output_folder_w):
                     continue  # Skip malformed lines
 
                 operation = parts[1]
+                parts[0] = str(max(int(parts[0]) // 4, 1))
                 if operation == "W":
                     # Set the first number to 0
-                    parts[0] = "0"
+                    #parts[0] = "0"
                     parts[1] = 'R'
                     outfile_w.write(" ".join(parts) + "\n")
                 if operation == "R":
-                    parts[0] = str(max(int(parts[0]) // 4,1))
+
                     outfile_r.write(" ".join(parts) + "\n")
 
         print(f"Processed file: {filename}")
@@ -55,9 +56,9 @@ def split_trace_folder(input_folder, output_folder_r, output_folder_w):
 
 if __name__ == "__main__":
     # Input and output folder paths
-    input_folder = "../wb_short_trace"  # Folder containing your input trace files
-    output_folder_r = "../wb_traces_R"  # Folder to store 'R' lines
-    output_folder_w = "../wb_traces_W"  # Folder to store 'W' lines
+    input_folder = "../wt_loadstore_trace"  # Folder containing your input trace files
+    output_folder_r = "../wt_traces_R"  # Folder to store 'R' lines
+    output_folder_w = "../wt_traces_W"  # Folder to store 'W' lines
 
     # Split all trace files
     split_trace_folder(input_folder, output_folder_r, output_folder_w)

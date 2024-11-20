@@ -6,8 +6,8 @@ import re
 
 # Path to the configuration file, trace directory, and output CSV
 config_path = "../sus_perf_test.yaml"
-trace_dir = "../wb_traces_W/"
-output_csv = 'sus_Wtrace_results.csv'
+trace_dir = "../wt_traces_W/"
+output_csv = 'sus_Wtrace_wt.csv'
 # slow_chip_timings = [
 #     "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
 #     "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
@@ -25,7 +25,7 @@ slow_chip_timings = [
     #"DDR5_3600AN",
     #"DDR5_4000AN",
     #"DDR5_4400AN",
-    "DDR5_4800AN",
+    #"DDR5_4800AN",
     #"DDR5_5200AN",
     #"DDR5_5600AN",
     #"DDR5_6000AN",
