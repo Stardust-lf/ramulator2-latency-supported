@@ -67,12 +67,12 @@ with open(config_path, 'r') as f:
 print(config)
 # Get a list of all trace files in the directory
 # trace_files = [f for f in os.listdir(trace_dir) if f.endswith('.trace')]
-trace_files = ["bc_twi.trace","bc_web.trace",
-               "603.trace","607.trace",
-               ]
+# trace_files = ["bc_twi.trace","bc_web.trace",
+#                "603.trace","607.trace",
+#                ]
 # trace_files = ["bfs_twi.trace","bfs_web.trace","bfs_road.trace"
 #                "bc_road.trace","cc_road.trace","pr_road.trace"]
-# trace_files = [filename for filename in os.listdir(trace_dir)]
+trace_files = [filename for filename in os.listdir(trace_dir)]
 print(trace_files)
 # Iterate over each trace file and each slow_chip_perf value
 for trace_filename in trace_files:
