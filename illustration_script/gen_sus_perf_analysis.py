@@ -7,7 +7,7 @@ import re
 # Path to the configuration file, trace directory, and output CSV
 config_path = "../sus_perf_test.yaml"
 trace_dir = "../wb_short_trace/"
-output_csv = 'sus_partial_wb_results.csv'
+output_csv = 'power_param.csv'
 # slow_chip_timings = [
 #     "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
 #     "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
@@ -20,12 +20,12 @@ output_csv = 'sus_partial_wb_results.csv'
 #     "DDR5_6400BN", "DDR5_6400AN", "DDR5_6400C"
 # ]
 slow_chip_timings = [
-    "DDR5_1600AN",
+    #"DDR5_1600AN",
     "DDR5_3200AN",
     #"DDR5_3600AN",
     #"DDR5_4000AN",
     #"DDR5_4400AN",
-    "DDR5_4800AN",
+    #"DDR5_4800AN",
     #"DDR5_5200AN",
     #"DDR5_5600AN",
     #"DDR5_6000AN",
@@ -67,12 +67,12 @@ with open(config_path, 'r') as f:
 print(config)
 # Get a list of all trace files in the directory
 # trace_files = [f for f in os.listdir(trace_dir) if f.endswith('.trace')]
-# trace_files = ["bc_twi.trace","bc_web.trace",
-#                "cc_twi.trace","cc_web.trace",
-#                "pr_twi.trace","pr_web.trace"]
+trace_files = ["bc_twi.trace","bc_web.trace",
+               "603.trace","607.trace",
+               ]
 # trace_files = ["bfs_twi.trace","bfs_web.trace","bfs_road.trace"
 #                "bc_road.trace","cc_road.trace","pr_road.trace"]
-trace_files = [filename for filename in os.listdir(trace_dir)]
+# trace_files = [filename for filename in os.listdir(trace_dir)]
 print(trace_files)
 # Iterate over each trace file and each slow_chip_perf value
 for trace_filename in trace_files:
@@ -84,6 +84,8 @@ for trace_filename in trace_files:
 
         # Update slow_chip_perf for this iteration
         config['MemorySystem']["slow_timing"] = timing
+        config['MemorySystem']['DRAM']['timing']['preset'] = timing
+        config['MemorySystem']['DRAM']['org']['preset'] = "DDR5_16Gb_x4"
 
         # Save the updated configuration to a temporary file
         temp_config_path = "../temp/temp_config.yaml"
@@ -96,7 +98,7 @@ for trace_filename in trace_files:
         # Extract performance data
         extracted_data = extract_info(result.stdout)
         extracted_data['trace'] = trace_filename.split('.')[0]
-        extracted_data['slow_timing'] = timing
+        extracted_data["timing"] = timing
 
         # Append extracted data to results list
         results.append(extracted_data)
