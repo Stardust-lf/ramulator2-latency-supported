@@ -34,22 +34,25 @@ class DDR5 : public IDRAM, public Implementation {
     inline static const std::map<std::string, std::vector<int>> timing_presets = {
       //   name         rate   nBL  nCL nRCD14ns   nRP14ns  nRAS32ns   nRC46ns   nWR  nRTP nCWL nPPD nCCDS nCCDS_WR nCCDS_WTR nCCDL nCCDL_WR5ns nCCDL_WTR nRRDS nRRDL nFAW nRFC1 nRFC2 nRFCsb nREFI nREFSBRD nRFM1 nRFM2 nRFMsb nDRFMab nDRFMsb nCS, tCK_ps
       //   name         rate   nBL  nCL nRCD   nRP  nRAS   nRC   nWR  nRTP nCWL nPPD nCCDS nCCDS_WR nCCDS_WTR nCCDL nCCDL_WR nCCDL_WTR nRRDS nRRDL nFAW nRFC1 nRFC2 nRFCsb nREFI nREFSBRD nRFM1 nRFM2 nRFMsb nDRFMab nDRFMsb nCS, tCK_ps
-      {"DDR5_1600AN",  {6400,  32,  46,  46,   46,  102,  147,    96,   24,  44,  8,   32,    32,     44+32+8,   64,    64,    44+64+32,  32,   -1,   -1,  -1,   -1,   -1,    -1,     120,    -1,   -1,   -1,     -1,     -1,    8,  2224}},
-      {"DDR5_3200AN",  {6400,  16,  46,  46,   46,  102,  147,    96,   24,  44,  4,   16,    16,     44+16+8,   64,    64,    44+32+32,  16,   -1,   -1,  -1,   -1,   -1,    -1,     60,    -1,   -1,   -1,     -1,     -1,    5,  1250}},
-      //   name         rate   nBL  nCL nRCD  nRP  nRAS nRC  nWR  nRTP nCWL nPPD nCCDS nCCDS_WR nCCDS_WTR nCCDL nCCDL_WR    nCCDL_WTR  nRRDS nRRDL nFAW nRFC1 nRFC2 nRFCsb nREFI nREFSBRD nRFM1 nRFM2 nRFMsb nDRFMab nDRFMsb nCS, tCK_ps
-      {"DDR5_4800AN",  {6400,  10,  46,  46,  46,  102,  147,  96,  24,  44,  3,   11,   11,        44+11+8,  64,       64,    44+21+32,  11,   -1,   -1,   -1,  -1,   -1,    -1,     40, -1, -1, -1, -1, -1, 3, 553}},
-      {"DDR5_6400AN",   {6400, 8,  46,  46,  46,  102,  147,  96,  24,  44,  2,    8,    8,        44+8+8,  64,       64,    44+16+32,   8,   -1,   -1,   -1,  -1,   -1,    -1,     30, -1,   -1,   -1,     -1,     -1,    2,   312}},
-      {"DDR5_6400AN_BL",{6400, 24,  46,  46,  46,  102,  147,  96,  24,  44,  2,    8,    8,        44+12+8,  16,       64,    44+22+32,   8,   -1,   -1,   -1,  -1,   -1,    -1,     30,  -1,   -1,   -1,     -1,     -1,    2,   312}},
-    };
-
-    //   //   name         rate   nBL  nCL nRCD   nRP  nRAS   nRC   nWR  nRTP nCWL nPPD nCCDS nCCDS_WR nCCDS_WTR nCCDL nCCDL_WR nCCDL_WTR nRRDS nRRDL nFAW nRFC1 nRFC2 nRFCsb nREFI nREFSBRD nRFM1 nRFM2 nRFMsb nDRFMab nDRFMsb nCS, tCK_ps
-    //   {"DDR5_1600AN",  {6400,  32,  46,  46,   46,  102,  147,    96,   24,  44,  8,   32,    32,     44+32+8,   16,    64,    44+64+32,  32,   -1,   -1,  -1,   -1,   -1,    -1,     120,    -1,   -1,   -1,     -1,     -1,    8,  2224}},
-    //   {"DDR5_3200AN",  {6400,  16,  46,  46,   46,  102,  147,    96,   24,  44,  4,   16,    16,     44+16+8,   16,    64,    44+32+32,  16,   -1,   -1,  -1,   -1,   -1,    -1,     60,    -1,   -1,   -1,     -1,     -1,    5,  1250}},
+    //   {"DDR5_1600AN",  {6400,  32,  46,  46,   46,  102,  147,    96,   24,  44,  8,   32,    32,     44+32+8,   64,    64,    44+64+32,  32,   -1,   -1,  -1,   -1,   -1,    -1,     120,    -1,   -1,   -1,     -1,     -1,    8,  2224}},
+    //   {"DDR5_3200AN",  {6400,  16,  46,  46,   46,  102,  147,    96,   24,  44,  4,   16,    16,     44+16+8,   64,    64,    44+32+32,  16,   -1,   -1,  -1,   -1,   -1,    -1,     60,    -1,   -1,   -1,     -1,     -1,    5,  1250}},
     //   //   name         rate   nBL  nCL nRCD  nRP  nRAS nRC  nWR  nRTP nCWL nPPD nCCDS nCCDS_WR nCCDS_WTR nCCDL nCCDL_WR    nCCDL_WTR  nRRDS nRRDL nFAW nRFC1 nRFC2 nRFCsb nREFI nREFSBRD nRFM1 nRFM2 nRFMsb nDRFMab nDRFMsb nCS, tCK_ps
-    //   {"DDR5_4800AN",  {6400,  10,  46,  46,  46,  102,  147,  96,  24,  44,  3,   11,   11,        44+11+8,  16,       64,    44+21+32,  11,   -1,   -1,   -1,  -1,   -1,    -1,     40, -1, -1, -1, -1, -1, 3, 553}},
-    //   {"DDR5_6400AN",   {6400, 8,  46,  46,  46,  102,  147,  96,  24,  44,  2,    8,    8,        44+8+8,  16,       128,    44+16+32,   8,   -1,   -1,   -1,  -1,   -1,    -1,     30, -1,   -1,   -1,     -1,     -1,    2,   312}},
+    //   {"DDR5_4800AN",  {6400,  10,  46,  46,  46,  102,  147,  96,  24,  44,  3,   11,   11,        44+11+8,  64,       64,    44+21+32,  11,   -1,   -1,   -1,  -1,   -1,    -1,     40, -1, -1, -1, -1, -1, 3, 553}},
+    //   {"DDR5_3200AN",  {6400,  16,  46,  46,   46,  102,  147,    96,   24,  44,  4,   16,    16,     44+16+8,   64,    64,    44+32+32,  16,   -1,   -1,  -1,   -1,   -1,    -1,     60,    -1,   -1,   -1,     -1,     -1,    5,  1250}},
+    //   //   name         rate   nBL  nCL nRCD  nRP  nRAS nRC  nWR  nRTP nCWL nPPD nCCDS nCCDS_WR nCCDS_WTR nCCDL nCCDL_WR    nCCDL_WTR  nRRDS nRRDL nFAW nRFC1 nRFC2 nRFCsb nREFI nREFSBRD nRFM1 nRFM2 nRFMsb nDRFMab nDRFMsb nCS, tCK_ps
+    //   {"DDR5_4800AN",  {6400,  10,  46,  46,  46,  102,  147,  96,  24,  44,  3,   11,   11,        44+11+8,  64,       64,    44+21+32,  11,   -1,   -1,   -1,  -1,   -1,    -1,     40, -1, -1, -1, -1, -1, 3, 553}},
+    //   {"DDR5_6400AN",   {6400, 8,  46,  46,  46,  102,  147,  96,  24,  44,  2,    8,    8,        44+8+8,  64,       64,    44+16+32,   8,   -1,   -1,   -1,  -1,   -1,    -1,     30, -1,   -1,   -1,     -1,     -1,    2,   312}},
     //   {"DDR5_6400AN_BL",{6400, 24,  46,  46,  46,  102,  147,  96,  24,  44,  2,    8,    8,        44+12+8,  16,       64,    44+22+32,   8,   -1,   -1,   -1,  -1,   -1,    -1,     30,  -1,   -1,   -1,     -1,     -1,    2,   312}},
     // };
+
+      //   name         rate   nBL  nCL nRCD   nRP  nRAS   nRC   nWR  nRTP nCWL nPPD nCCDS nCCDS_WR nCCDS_WTR nCCDL nCCDL_WR nCCDL_WTR nRRDS nRRDL nFAW nRFC1 nRFC2 nRFCsb nREFI nREFSBRD nRFM1 nRFM2 nRFMsb nDRFMab nDRFMsb nCS, tCK_ps
+      {"DDR5_1600AN",  {6400,  32,  46,  46,   46,  102,  147,    96,   24,  44,  8,   32,    32,     44+32+8,   16,    64,    44+64+32,  32,   -1,   -1,  -1,   -1,   -1,    -1,     120,    -1,   -1,   -1,     -1,     -1,    8,  2224}},
+      {"DDR5_3200AN",  {6400,  16,  46,  46,   46,  102,  147,    96,   24,  44,  4,   16,    16,     44+16+8,   16,    64,    44+32+32,  16,   -1,   -1,  -1,   -1,   -1,    -1,     60,    -1,   -1,   -1,     -1,     -1,    5,  1250}},
+      //   name         rate   nBL  nCL nRCD  nRP  nRAS nRC  nWR  nRTP nCWL nPPD nCCDS nCCDS_WR nCCDS_WTR nCCDL nCCDL_WR    nCCDL_WTR  nRRDS nRRDL nFAW nRFC1 nRFC2 nRFCsb nREFI nREFSBRD nRFM1 nRFM2 nRFMsb nDRFMab nDRFMsb nCS, tCK_ps
+      {"DDR5_4800AN",  {6400,  10,  46,  46,  46,  102,  147,  96,  24,  44,  3,   11,   11,        44+11+8,  16,       64,    44+21+32,  11,   -1,   -1,   -1,  -1,   -1,    -1,     40, -1, -1, -1, -1, -1, 3, 553}},
+      {"DDR5_6400AN",   {6400, 8,  46,  46,  46,  102,  147,  96,  24,  44,  2,    8,    8,        44+8+8,  16,       128,    44+16+32,   8,   -1,   -1,   -1,  -1,   -1,    -1,     30, -1,   -1,   -1,     -1,     -1,    2,   312}},
+      {"DDR5_6400AN_BL",{6400, 24,  46,  46,  46,  102,  147,  96,  24,  44,  2,    8,    8,        44+12+8,  16,       64,    44+22+32,   8,   -1,   -1,   -1,  -1,   -1,    -1,     30,  -1,   -1,   -1,     -1,     -1,    2,   312}},
+    };
 
   //  inline static const std::map<std::string, std::vector<int>> timing_presets = {
   //     //   name         rate   nBL  nCL nRCD   nRP  nRAS   nRC   nWR  nRTP nCWL nPPD nCCDS nCCDS_WR nCCDS_WTR nCCDL nCCDL_WR nCCDL_WTR nRRDS nRRDL nFAW nRFC1 nRFC2 nRFCsb nREFI nREFSBRD nRFM1 nRFM2 nRFMsb nDRFMab nDRFMsb nCS, tCK_ps

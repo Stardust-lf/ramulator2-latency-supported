@@ -17,6 +17,9 @@ def split_trace_folder(input_folder, output_folder_r, output_folder_w):
 
     # Iterate through all files in the input folder
     for filename in os.listdir(input_folder):
+        if "_" in filename:
+            print(f"Skipping file with underscore: {filename}")
+            continue
         input_file_path = os.path.join(input_folder, filename)
 
         # Skip non-files
@@ -44,7 +47,7 @@ def split_trace_folder(input_folder, output_folder_r, output_folder_w):
                     parts[1] = 'R'
                     outfile_w.write(" ".join(parts) + "\n")
                 if operation == "R":
-                    parts[0] = str(int(parts[0]) // 4)
+                    parts[0] = str(max(int(parts[0]) // 4,1))
                     outfile_r.write(" ".join(parts) + "\n")
 
         print(f"Processed file: {filename}")
