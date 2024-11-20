@@ -25,7 +25,7 @@ slow_chip_timings = [
     #"DDR5_3600AN",
     #"DDR5_4000AN",
     #"DDR5_4400AN",
-    "DDR5_4800AN",
+    #"DDR5_4800AN",
     #"DDR5_5200AN",
     #"DDR5_5600AN",
     #"DDR5_6000AN",
