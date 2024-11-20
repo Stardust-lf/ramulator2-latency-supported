@@ -43,6 +43,7 @@ def split_trace_folder(input_folder, output_folder_r, output_folder_w):
                 elif operation == "W":
                     # Set the first number to 0
                     parts[0] = "0"
+                    parts[1] = 'R'
                     outfile_w.write(" ".join(parts) + "\n")
 
         print(f"Processed file: {filename}")
