@@ -64,7 +64,7 @@ results = []
 
 # Configuration
 write_threshold = 12
-trace_folder = "../wb_short_trace"
+trace_folder = "../final_traces"
 read_speed_data = pd.read_csv('sus_Rtrace_results.csv')
 write_speed_data = pd.read_csv('sus_Wtrace_results.csv')
 slow_chips = ["DDR5_1600AN", "DDR5_3200AN", "DDR5_6400AN"]
