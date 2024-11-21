@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
-from hyperparams import trace_names
+
 def count_reads_between_writes(trace_file, write_threshold=24):
     read_count = 0
     write_count = 0
@@ -72,7 +72,7 @@ slow_chips = ["DDR5_1600AN", "DDR5_3200AN", "DDR5_6400AN"]
 # Process traces for each threshold
 for write_threshold in write_thresholds:
     for slow_chip in slow_chips:
-        for trace_file in trace_names:
+        for trace_file in os.listdir(trace_folder):
             if not trace_file.endswith(".trace"):
                 continue
 
