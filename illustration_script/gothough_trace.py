@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
-
+from hyperparams import trace_names
 def count_reads_between_writes(trace_file, write_threshold=24):
     read_count = 0
     write_count = 0
@@ -72,7 +72,7 @@ slow_chips = ["DDR5_1600AN", "DDR5_3200AN", "DDR5_6400AN"]
 # Process traces for each threshold
 for write_threshold in write_thresholds:
     for slow_chip in slow_chips:
-        for trace_file in os.listdir(trace_folder):
+        for trace_file in trace_names:
             if not trace_file.endswith(".trace"):
                 continue
 
@@ -95,7 +95,6 @@ for write_threshold in write_thresholds:
                 normalized_cost = cost_sum / total_system_cycles_6400 if total_system_cycles_6400 else None
             else:
                 normalized_cost = None
-
             # Collect results
             all_results.append({
                 "Write Threshold": write_threshold,
@@ -105,6 +104,7 @@ for write_threshold in write_thresholds:
                 "Fast Write Cost": fast_write_cost,
                 "Slow Write Cost": slow_write_cost,
                 "Write Proportion": write_proportion,
+                "Average Read Block Size": np.average(r_count) if len(r_count) != 0 else 0,
                 "Normalized Cost (%)": 100 * normalized_cost if normalized_cost is not None else None
             })
 
