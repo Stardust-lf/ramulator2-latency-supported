@@ -1,10 +1,10 @@
 import os
 import random
-
+from hyperparams import trace_names
 
 def process_trace_with_probability(trace_path, output_path, probability):
     """
-    按给定概率复制读指令，将复制的指令插入到当前指令的后第9行，并翻转第12位。
+    按给定概率复制读指令，将复制的指令插入到当前指令的后连续12行，并翻转第12位。
     同时在插入前后打印读请求数量和总指令数量。
     :param trace_path: trace 文件路径
     :param output_path: 输出文件路径
@@ -27,18 +27,24 @@ def process_trace_with_probability(trace_path, output_path, probability):
 
     for i, line in enumerate(lines):
         parts = line.strip().split()
-        if len(parts) >= 3 and parts[1] == 'R':  # 读指令
-            if random.random() < probability:  # 按概率决定是否复制
-                address = int(parts[2])  # 提取地址
-                flipped_address = address ^ (1 << 12)  # 翻转第12位
-                new_line = f"0 R {flipped_address}\n"  # 新的指令格式
-                insert_index = i + 9 + offset  # 插入到当前行的后第9行
-                if insert_index < len(new_lines):  # 确保不越界
-                    new_lines.insert(insert_index, new_line)
-                else:
-                    new_lines.append(new_line)  # 如果超出范围，则追加到文件末尾
-                offset += 1  # 每插入一行，后续行号需加1
-                inserted_count += 1
+        if len(parts) >= 3:
+            parts[0] = str(max(1, int(parts[0]) // 4))  # 最前面的数字除4取整，但不小于1
+            new_line = ' '.join(parts) + '\n'
+            new_lines[i + offset] = new_line
+
+            if parts[1] == 'R':  # 读指令
+                if random.random() < probability:  # 按概率决定是否复制
+                    address = int(parts[2])  # 提取地址
+                    for j in range(12):  # 连续插入12条翻转过地址的指令
+                        flipped_address = address ^ (1 << 12)  # 翻转第12位
+                        new_line = f"{int(parts[0])} R {flipped_address}\n"  # 新的指令格式
+                        insert_index = i + 1 + offset  # 插入到当前行的后面12行
+                        if insert_index < len(new_lines):  # 确保不超界
+                            new_lines.insert(insert_index, new_line)
+                        else:
+                            new_lines.append(new_line)  # 如果超出范围，则追加到文件末尾
+                        offset += 1  # 每插入一行，后续行号需加1
+                        inserted_count += 1
 
     # 统计插入后的读请求数量和总数量
     final_read_requests = sum(1 for line in new_lines if len(line.strip().split()) >= 3 and line.strip().split()[1] == 'R')
@@ -60,9 +66,9 @@ def process_trace_with_probability(trace_path, output_path, probability):
 def main():
     # 输入目录路径
     input_dir = "../wb_short_trace"
-    output_base_dir = "../processed_traces"
+    output_base_dir = "../wb_doubleR_traces"
 
-    # 生成的概率列表，从 10^-5 到 10^-1
+    # 生成的概率列表，从 10^-5 到 10^-2
     probabilities = [0]
 
     # 确保输出基目录存在
@@ -72,7 +78,7 @@ def main():
         output_dir = os.path.join(output_base_dir, f"prob_{prob:.0e}")  # 使用科学计数法命名子目录
         os.makedirs(output_dir, exist_ok=True)
 
-        for trace in os.listdir(input_dir):
+        for trace in trace_names:
             trace_path = os.path.join(input_dir, trace)
             output_path = os.path.join(output_dir, trace)
 

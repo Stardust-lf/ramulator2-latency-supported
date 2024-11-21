@@ -7,7 +7,7 @@ import re
 # Path to the configuration file, trace directory, and output CSV
 config_path = "../sus_perf_test.yaml"
 trace_dir = "../wb_short_trace/"
-output_csv = 'power_param.csv'
+output_csv = 'sus_1channel_result.csv'
 # slow_chip_timings = [
 #     "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
 #     "DDR5_3600BN", "DDR5_3600AN", "DDR5_3600C",
@@ -21,7 +21,7 @@ output_csv = 'power_param.csv'
 # ]
 slow_chip_timings = [
     #"DDR5_1600AN",
-    #"DDR5_3200AN",
+    "DDR5_3200AN",
     #"DDR5_3600AN",
     #"DDR5_4000AN",
     #"DDR5_4400AN",
