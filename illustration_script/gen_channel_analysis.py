@@ -6,7 +6,7 @@ import re
 
 # Path to the configuration file, trace directory, and output CSV
 config_path = "../sus_perf_test.yaml"
-trace_dir = "../offest_128_traces/"
+trace_dir = "../offest_base_traces/"
 output_csv = 'double_channel_test.csv'
 # timings = [
 #     "DDR5_3200BN", "DDR5_3200AN", "DDR5_3200C",
@@ -52,7 +52,7 @@ trace_files = [f for f in os.listdir(trace_dir) if f.endswith('.trace')]
 # Iterate over each trace file and each slow_chip_perf value
 for trace_filename in trace_files:
     for timing in timings:
-        for channel in [1]:
+        for channel in [2]:
             trace_path = os.path.join(trace_dir, trace_filename)
             print(f"Running simulation with trace {trace_filename} and timing = {timing} with channel = {channel}")
             config['Frontend']['path'] = trace_path  # Set the current trace file
@@ -67,7 +67,7 @@ for trace_filename in trace_files:
 
             # Run the simulation and capture the output with a timeout
             result = subprocess.run(['../ramulator2', '-f', temp_config_path], capture_output=True, text=True)
-            print(result.stdout)
+            #print(result.stdout)
             extracted_data = extract_info(result.stdout)
             extracted_data['trace'] = trace_filename.split('.')[0]
             extracted_data['timing'] = timing

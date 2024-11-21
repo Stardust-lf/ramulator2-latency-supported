@@ -5,7 +5,7 @@ Frontend:
   clock_ratio: 8
   impl: LoadStoreTrace
   num_expected_insts: 1000000
-  path: ../offest_128_traces/619.trace
+  path: ../offest_base_traces/619.trace
 MemorySystem:
   AddrMapper:
     impl: RoBaRaCoCh
@@ -24,7 +24,7 @@ MemorySystem:
       BRC: 2
     impl: DDR5
     org:
-      channel: 1
+      channel: 2
       preset: DDR5_8Gb_x4
       rank: 2
     timing:

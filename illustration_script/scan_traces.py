@@ -31,7 +31,7 @@ def scan_trace_folder(input_folder):
 
 
 # 输入文件夹路径
-input_folder = "../wb_short_trace"  # 替换为你的输入文件夹路径
+input_folder = "../offest_base_traces"  # 替换为你的输入文件夹路径
 
 # 扫描文件夹中的所有 trace 文件
 scan_trace_folder(input_folder)

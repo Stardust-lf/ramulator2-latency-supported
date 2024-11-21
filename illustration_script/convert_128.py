@@ -13,44 +13,52 @@ def process_trace_file(input_file_path, output_file_path):
             input_line_count += 1
             parts = line.strip().split()
             if len(parts) == 3:
-                address = int(parts[2])  # 将地址转换为整数
-                address = address & ~0x7F  # 将低 7 位比特置 0
+                address_str = parts[2]
 
-                # 检查是否与上一个操作和地址相同
+                # Detect hexadecimal addresses starting with "0x"
+                if address_str.startswith("0x"):
+                    address = int(address_str, 16)  # Convert address from hex to integer
+                else:
+                    address = int(address_str)  # Convert address from decimal to integer
+
+                address = address & ~0x7F  # Set the lower 7 bits to 0
+
+                # Check if the operation and address are the same as the last one
                 current_operation = parts[1]
                 if last_operation == current_operation and last_address == address:
-                    continue  # 跳过连续的相同操作
+                    continue  # Skip consecutive identical operations
                 else:
                     last_address = address
                     last_operation = current_operation
 
-                # 写入处理后的行
-                outfile.write(f"{parts[0]} {current_operation} {address}\n")
+                # Write the processed line
+                outfile.write(f"{parts[0]} {current_operation} {hex(address)}\n")
                 output_line_count += 1
+                if output_line_count >= 1000000:
+                    break
 
-
-    # 打印输入和输出的行数
+    # Print input and output line counts
     print(f"File: {input_file_path}")
     print(f"Input Lines: {input_line_count}, Output Lines: {output_line_count}")
 
 
 def process_trace_folder(input_folder, output_folder):
-    # 检查输出文件夹是否存在，如果不存在则创建
+    # Check if output folder exists, if not, create it
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    # 处理文件夹中的每个 trace 文件
+    # Process each trace file in the folder
     for filename in trace_names:
-        if filename.endswith('.txt') or filename.endswith('.trace'):  # 根据你的文件扩展名修改
+        if filename.endswith('.txt') or filename.endswith('.trace'):  # Modify based on your file extension
             input_file_path = os.path.join(input_folder, filename)
             output_file_path = os.path.join(output_folder, filename)
             process_trace_file(input_file_path, output_file_path)
             print(f"Processed {filename} and saved to {output_folder}\n")
 
 
-# 输入文件夹和输出文件夹路径
-input_folder = "../offest_base_traces"  # 替换为你的输入文件夹路径
-output_folder = "../offest_128_traces"  # 替换为你的输出文件夹路径
+# Input folder and output folder paths
+input_folder = "../offest_base_traces"  # Replace with your input folder path
+output_folder = "../offest_128_traces"  # Replace with your output folder path
 
-# 处理文件夹
+# Process the folder
 process_trace_folder(input_folder, output_folder)
