@@ -110,5 +110,5 @@ for write_threshold in write_thresholds:
 
 # Save results to CSV
 all_results_df = pd.DataFrame(all_results)
-# output_file = "avg_latency_results_multiple_thresholds.csv"
-# all_results_df.to_csv(output_file, index=False)
+output_file = "avg_latency_results_multiple_thresholds.csv"
+all_results_df.to_csv(output_file, index=False)
