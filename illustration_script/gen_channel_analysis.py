@@ -5,7 +5,7 @@ import pandas as pd
 import re
 
 # Path to the configuration file, trace directory, and output CSV
-config_path = "../sus_perf_test.yaml"
+config_path = "/home/fan/ramulator_bk/ramulator2/example_config.yaml"
 trace_dir = "../offest_base_traces/"
 output_csv = 'double_channel_test.csv'
 # timings = [
@@ -52,21 +52,21 @@ trace_files = [f for f in os.listdir(trace_dir) if f.endswith('.trace')]
 # Iterate over each trace file and each slow_chip_perf value
 for trace_filename in trace_files:
     for timing in timings:
-        for channel in [2]:
+        for channel in [1]:
             trace_path = os.path.join(trace_dir, trace_filename)
             print(f"Running simulation with trace {trace_filename} and timing = {timing} with channel = {channel}")
             config['Frontend']['path'] = trace_path  # Set the current trace file
             # Update slow_chip_perf for this iteration
-            config['MemorySystem']["slow_timing"] = timing
             config['MemorySystem']['DRAM']['timing']['preset'] = timing
             config['MemorySystem']['DRAM']['org']['channel'] = channel
+            print(config)
             # Save the updated configuration to a temporary file
             temp_config_path = "../temp/temp_config.yaml"
             with open(temp_config_path, 'w') as temp_config:
                 yaml.dump(config, temp_config)
 
             # Run the simulation and capture the output with a timeout
-            result = subprocess.run(['../ramulator2', '-f', temp_config_path], capture_output=True, text=True)
+            result = subprocess.run(['/home/fan/ramulator_bk/ramulator2/ramulator2', '-f', temp_config_path], capture_output=True, text=True)
             #print(result.stdout)
             extracted_data = extract_info(result.stdout)
             extracted_data['trace'] = trace_filename.split('.')[0]

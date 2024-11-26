@@ -5,10 +5,10 @@ Frontend:
   clock_ratio: 8
   impl: LoadStoreTrace
   num_expected_insts: 1000000
-  path: ../offest_base_traces/619.trace
+  path: ../offest_base_traces/620.trace
 MemorySystem:
   AddrMapper:
-    impl: RoBaRaCoCh
+    impl: MOP4CLXOR
   Controller:
     RefreshManager:
       impl: AllBank
@@ -17,19 +17,17 @@ MemorySystem:
       impl: OpenRowPolicy
     Scheduler:
       impl: FRFCFS
-    impl: Dual
+    impl: Generic
     plugins: null
   DRAM:
     RFM:
       BRC: 2
     impl: DDR5
     org:
-      channel: 2
-      preset: DDR5_8Gb_x4
+      channel: 1
+      preset: DDR5_16Gb_x4
       rank: 2
     timing:
       preset: DDR5_6400AN
   clock_ratio: 3
-  impl: DualChannelDRAM
-  slow_impl: DDR5
-  slow_timing: DDR5_6400AN
+  impl: GenericDRAM

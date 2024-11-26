@@ -1,7 +1,6 @@
 import os
 from hyperparams import trace_names
 
-
 def process_trace_file(input_file_path, output_file_path):
     input_line_count = 0
     output_line_count = 0
@@ -13,6 +12,9 @@ def process_trace_file(input_file_path, output_file_path):
             input_line_count += 1
             parts = line.strip().split()
             if len(parts) == 3:
+                # Modify the CPU instruction number
+                instruction_number = int(parts[0])
+
                 address_str = parts[2]
 
                 # Detect hexadecimal addresses starting with "0x"
@@ -21,6 +23,7 @@ def process_trace_file(input_file_path, output_file_path):
                 else:
                     address = int(address_str)  # Convert address from decimal to integer
 
+                address = address % (2 ** 32)  # Ensure the address is mod 2^32
                 address = address & ~0x7F  # Set the lower 7 bits to 0
 
                 # Check if the operation and address are the same as the last one
@@ -32,7 +35,7 @@ def process_trace_file(input_file_path, output_file_path):
                     last_operation = current_operation
 
                 # Write the processed line
-                outfile.write(f"{parts[0]} {current_operation} {hex(address)}\n")
+                outfile.write(f"{instruction_number} {current_operation} {hex(address)}\n")
                 output_line_count += 1
                 if output_line_count >= 1000000:
                     break
@@ -40,7 +43,6 @@ def process_trace_file(input_file_path, output_file_path):
     # Print input and output line counts
     print(f"File: {input_file_path}")
     print(f"Input Lines: {input_line_count}, Output Lines: {output_line_count}")
-
 
 def process_trace_folder(input_folder, output_folder):
     # Check if output folder exists, if not, create it
@@ -54,7 +56,6 @@ def process_trace_folder(input_folder, output_folder):
             output_file_path = os.path.join(output_folder, filename)
             process_trace_file(input_file_path, output_file_path)
             print(f"Processed {filename} and saved to {output_folder}\n")
-
 
 # Input folder and output folder paths
 input_folder = "../offest_base_traces"  # Replace with your input folder path

@@ -41,7 +41,7 @@ def split_trace_folder(input_folder, output_folder_r, output_folder_w):
                     continue  # Skip malformed lines
 
                 operation = parts[1]
-                parts[0] = str(max(int(parts[0]) // 4, 1))
+                #parts[0] = str(max(int(parts[0]) // 4, 1))
                 if operation == "W":
                     # Set the first number to 0
                     #parts[0] = "0"
@@ -56,9 +56,9 @@ def split_trace_folder(input_folder, output_folder_r, output_folder_w):
 
 if __name__ == "__main__":
     # Input and output folder paths
-    input_folder = "../wt_loadstore_trace"  # Folder containing your input trace files
-    output_folder_r = "../wt_traces_R"  # Folder to store 'R' lines
-    output_folder_w = "../wt_traces_W"  # Folder to store 'W' lines
+    input_folder = "../offest_base_traces"  # Folder containing your input trace files
+    output_folder_r = "../final_R_traces"  # Folder to store 'R' lines
+    output_folder_w = "../final_W_traces"  # Folder to store 'W' lines
 
     # Split all trace files
     split_trace_folder(input_folder, output_folder_r, output_folder_w)

@@ -2,7 +2,7 @@ Frontend:
   impl: LoadStoreTrace
   clock_ratio: 8
   num_expected_insts: 1000000
-  path: wb_short_trace/bc_twi.trace
+  path: offest_base_traces/602.trace
   Translation:
     impl: NoTranslation
     max_addr: 2147483648
@@ -17,7 +17,7 @@ MemorySystem:
   DRAM:
     impl: DDR5
     org:
-      preset: DDR5_8Gb_x4
+      preset: DDR5_16Gb_x4
       channel: 1
       rank: 2
     timing:
@@ -38,4 +38,4 @@ MemorySystem:
     
 
   AddrMapper:
-    impl: RoBaRaCoCh
+    impl: MOP4CLXOR
